@@ -10,7 +10,12 @@
 #include "MR1PermutationPDB.h"
 #include <math.h>
 
-
+enum kAnchorSelection
+{
+    Temporal,
+    Closest,
+    Random
+};
 
 template<class State>
 struct OpenClosedData
@@ -23,7 +28,7 @@ public:
 };
 
 template <class Env, class State>
-class TASOptFrontier
+class TASSFrontier
 {
 public:
     Env *env;
@@ -42,13 +47,13 @@ public:
 	std::vector<int> _occurrences;
 	int numOfExp = 0;
 	State rendezvous;
-	TASOptFrontier *other;
+	TASSFrontier *other;
     int sampleCount;
 	State anchor;
 	State start;
     Heuristic<State> *h;
-	TASOptFrontier(Env *_env, State _start, Heuristic<State> *h, int _sampleCount);
-	~TASOptFrontier(){}
+	TASSFrontier(Env *_env, State _start, Heuristic<State> *h, int _sampleCount);
+	~TASSFrontier(){}
 	bool DoSingleSearchStep();
 	void GetPath(std::vector<State> &path);
 	void SetSeed(unsigned int seed);
@@ -57,7 +62,7 @@ public:
 	bool validSolution;
     double anchorH, anchorG;
 
-	int internalSeed = 10;
+    kAnchorSelection anchorSelection;
 
 	//double comps = 0;
 
@@ -90,7 +95,7 @@ public:
 
 
 template <class Env,  class State>
-TASOptFrontier<Env, State>::TASOptFrontier(Env *_env, State _start, Heuristic<State> *_h, int _sampleCount)
+TASSFrontier<Env, State>::TASSFrontier(Env *_env, State _start, Heuristic<State> *_h, int _sampleCount)
 {
     sampleCount = _sampleCount;
 	env = _env;
@@ -122,12 +127,11 @@ TASOptFrontier<Env, State>::TASOptFrontier(Env *_env, State _start, Heuristic<St
 	anchor = start;
 	numOfExp = 0;
 	validSolution = true;
-	internalSeed = 10;
 }
 
 
 template <class Env,  class State>
-void TASOptFrontier<Env, State>::ExtractPath(std::vector<State> &path)
+void TASSFrontier<Env, State>::ExtractPath(std::vector<State> &path)
 {
 	auto current = rendezvous;
 	while (true)
@@ -145,7 +149,7 @@ void TASOptFrontier<Env, State>::ExtractPath(std::vector<State> &path)
 
 
 template <class Env,  class State>
-bool TASOptFrontier<Env, State>::DoSingleSearchStep()
+bool TASSFrontier<Env, State>::DoSingleSearchStep()
 {
 	if (open.size() == 0)
 	{
@@ -217,21 +221,42 @@ bool TASOptFrontier<Env, State>::DoSingleSearchStep()
 			//parents[nhash] = bestCandidate;
 		}
 	}
-    auto hh = HCost(bestCandidate, other->start);
-    if (hh < anchorH)
+
+    switch (anchorSelection)
     {
-        anchor = bestCandidate;
-        anchorH = hh;
-        anchorG = openClosed[bestCandidateHash].g;
-    }
-    else if (hh == anchorH)
-    {
-        if (openClosed[bestCandidateHash].g < anchorG)
-        {
+        case Temporal:
             anchor = bestCandidate;
-            anchorG = openClosed[bestCandidateHash].g;
-        }
+            break;
+        case Closest:
+		{
+			auto hh = HCost(bestCandidate, other->start);
+            if (hh < anchorH)
+            {
+                anchor = bestCandidate;
+                anchorH = hh;
+                anchorG = openClosed[bestCandidateHash].g;
+            }
+            else if (hh == anchorH)
+            {
+                if (openClosed[bestCandidateHash].g < anchorG)
+                {
+                    anchor = bestCandidate;
+                    anchorG = openClosed[bestCandidateHash].g;
+                }
+            }
+            break;
+		}
+        case Random:
+		{
+			int random_index = rand_r(&seed) % open.size();
+            anchor = open[random_index];
+            break;
+		}
+		default:
+			break;
     }
+
+    
 	//anchor = bestCandidate;
     
 	if (other->openClosed.find(bestCandidateHash) != other->openClosed.end())// || bestCandidate == other->start)
@@ -245,30 +270,36 @@ bool TASOptFrontier<Env, State>::DoSingleSearchStep()
 
 
 template <class Env,  class State>
-void TASOptFrontier<Env, State>::SetSeed(unsigned int seed)
+void TASSFrontier<Env, State>::SetSeed(unsigned int seed)
 {
 	this->seed = seed;
 }
 
 template <class Env, class State>
-class TASOpt
+class TASS
 {
 private:
 	int turn = 0;
 public:
-	TASOptFrontier<Env, State>* ff;
-	TASOptFrontier<Env, State>* bf;
-	TASOpt();
-	TASOpt(Env *_env, State _start, State _goal, Heuristic<State> *hf, Heuristic<State> *hb, int _sampleCount);
-	~TASOpt(){}
+	int episode = -1;
+	TASSFrontier<Env, State>* ff;
+	TASSFrontier<Env, State>* bf;
+	TASS();
+	TASS(Env *_env, State _start, State _goal, Heuristic<State> *hf, Heuristic<State> *hb, int _sampleCount);
+	~TASS(){}
 	void Init(Env *_env, State _start, State _goal, Heuristic<State> *hf, Heuristic<State> *hb, int _sampleCount)
 	{
-		ff = new TASOptFrontier<Env, State>(_env, _start, hf, _sampleCount);
-		bf = new TASOptFrontier<Env, State>(_env, _goal, hb, _sampleCount);
+		ff = new TASSFrontier<Env, State>(_env, _start, hf, _sampleCount);
+		bf = new TASSFrontier<Env, State>(_env, _goal, hb, _sampleCount);
 		ff->other = bf;
 		bf->other = ff;
 		ff.anchorH = ff.HCost(_start, _goal);
 		bf.anchorH = bf.HCost(_goal, _start);
+	}
+	std::function<void(State, State, Heuristic<State>*&)> heuristicUpdate;
+	void SetHeuristicUpdate(std::function<void(State, State, Heuristic<State>*&)> p)
+	{
+		heuristicUpdate = p;
 	}
 	int GetPathLength()
 	{
@@ -323,8 +354,23 @@ public:
 	void GetPath(std::vector<State> &path)
 	{
 		path.resize(0);
+		int count = 0;
 		while (true)
 		{
+			if (episode > 0 && count % episode == 0)
+			{
+				//Heuristic<State> *h1 = new Heuristic<State>();
+				heuristicUpdate(ff->anchor, bf->anchor, bf->h);
+				//bf->h = h1;
+				//std::cout << "TEST: " << bf->h->HCost(ff->anchor, bf->anchor) << std::endl;
+
+				//Heuristic<State> *h2 = new Heuristic<State>();
+				//heuristicUpdate(bf->anchor, ff->h);
+				ff->h = bf->h;
+				//std::cout << "TEST: " << bf->h->HCost(ff->anchor, bf->anchor) << std::endl;
+				std::cout << "episode(" << episode << "): " << count / episode << std::endl;
+			}
+			count++;
 			if (DoSingleSearchStep())
 			{
 				break;
@@ -350,14 +396,20 @@ public:
 	{
 		this.seed = seed;
 	}
+
+    void SetAnchorSelection(kAnchorSelection selection)
+    {
+        ff->anchorSelection = selection;
+        bf->anchorSelection = selection;
+    }
 };
 
 
 template <class Env, class State>
-TASOpt<Env, State>::TASOpt(Env *_env, State _start, State _goal, Heuristic<State> *hf, Heuristic<State> *hb, int _sampleCount)
+TASS<Env, State>::TASS(Env *_env, State _start, State _goal, Heuristic<State> *hf, Heuristic<State> *hb, int _sampleCount)
 {
-	ff = new TASOptFrontier<Env, State>(_env, _start, hf, _sampleCount);
-	bf = new TASOptFrontier<Env, State>(_env, _goal, hb, _sampleCount);
+	ff = new TASSFrontier<Env, State>(_env, _start, hf, _sampleCount);
+	bf = new TASSFrontier<Env, State>(_env, _goal, hb, _sampleCount);
 	ff->other = bf;
 	bf->other = ff;
 }
