@@ -5,7 +5,7 @@
 # $Source: /usr/cvsroot/project_hog/build/gmake/apps/nathan/Makefile.prj.inc,v $
 #-----------------------------------------------------------------------------
 
-NAME = aaai
+NAME = BiGM
 DBG_NAME = $(NAME)
 REL_NAME = $(NAME)
 
@@ -59,4 +59,4 @@ endif
 default : all
 
 SRC_CPP = \
-	apps/aaai/STP5.cpp \
+	apps/BiGM/BiGM.cpp \

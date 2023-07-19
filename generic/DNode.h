@@ -183,6 +183,7 @@ private:
 public:
 	DNodeFrontier<Env, State>* ff;
 	DNodeFrontier<Env, State>* bf;
+	double pathRatio;
 	DNode();
 	DNode(Env *_env, State _start, State _goal, Heuristic<State> *hf, Heuristic<State> *hb, int _k);
 	~DNode(){}
@@ -257,6 +258,7 @@ public:
 			path.push_back(front[i]);
 		for (int i = 0; i < back.size(); i++)
 			path.push_back(back[i]);
+		pathRatio = (double)front.size() / (double)back.size();
 	}
 	void GetPath(std::vector<State> &path)
 	{

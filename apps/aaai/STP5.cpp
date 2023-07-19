@@ -12,8 +12,14 @@
 #include <iostream>
 #include <vector>
 #include "MultipleAdditiveHeuristic.h"
-#include "TASS.h"
-#include "FastDict.h"
+//#include "TASTest.h"
+#include "TASS4.h"
+#include "TASS3.h"
+//#include "FastDict.h"
+#include "TTBS.h"
+//#include "RASFast.h"
+#include "RASS.h"
+#include "DNode.h"
 
 using namespace std;
 
@@ -66,7 +72,7 @@ class GroupHeuristic : public Heuristic<state>
 				//groups[j].second++;
 			}
         }
-		groups[bestIndex]->count++;// = HeuristicGroup(groups[bestIndex].indices, groups[bestIndex].count);
+		//groups[bestIndex]->count++;// = HeuristicGroup(groups[bestIndex].indices, groups[bestIndex].count);
 	    return res;
     	//return abs(baseH.HCost(state1, state1) - baseH.HCost(state2, state2));
     }
@@ -172,14 +178,20 @@ void HUpdate(TOHState<numDisks> s, TOHState<numDisks> g, Heuristic<TOHState<numD
 	pdb4->BuildPDB(g, std::thread::hardware_concurrency(), false);
 
 	Heuristic<TOHState<numDisks>> __h;
+	/*
 	while (mhh->groups.size() + 2 > maxPivots)
 	{
 		auto la = mhh->GetLeastAccessed();
 		mhh->RemoveGroup(la);
 	}
+	*/
+	while(mhh->groups.size() > 2)
+	{
+		mhh->RemoveGroup(mhh->groups.size() - 1);
+	}
 	mhh->AddGroup({pdb2});
 	mhh->AddGroup({pdb4});
-	mhh->ClearCounts();
+	//mhh->ClearCounts();
 	h = mhh;
 }
 
@@ -394,6 +406,100 @@ void PlanningTest(int seed_problem, int samples, kAnchorSelection selection, int
 }
 
 
+template<int numOfDisks, int pdb1Disks>
+void PlanningTest2(int seed_problem, int samples, kAnchorSelection2 selection, int episode, GroupHeuristic<TOHState<numOfDisks>> hm)
+{
+	std::cout << "TAS(" << samples << ")" << std::endl;
+    srandom(seed_problem);
+    TOH<numOfDisks> *toh = new TOH<numOfDisks>();
+    TOHState<numOfDisks> start, goal, pivot1, pivot2;
+    Heuristic<TOHState<numOfDisks>> hf, hb, h1, h2, h3, h4;
+    vector<TOHState<numOfDisks>> path, aPath, fPath, bPath;
+
+    start.counts[0] = start.counts[1] = start.counts[2] = start.counts[3] = 0;
+	for (int x = numOfDisks; x > 0; x--)
+	{
+		int whichPeg = random()%4;
+		start.disks[whichPeg][start.counts[whichPeg]] = x;
+		start.counts[whichPeg]++;
+	}
+    goal.counts[0] = goal.counts[1] = goal.counts[2] = goal.counts[3] = 0;
+	for (int x = numOfDisks; x > 0; x--)
+	{
+		int whichPeg = random()%4;
+		goal.disks[whichPeg][goal.counts[whichPeg]] = x;
+		goal.counts[whichPeg]++;
+	}
+	Heuristic<TOHState<numOfDisks>> spec1, spec2;
+	BuildSinglePDB<numOfDisks, pdb1Disks>(spec1, start);
+	BuildSinglePDB<numOfDisks, pdb1Disks>(spec2, goal);
+	hm.AddGroup({spec1.heuristics[0]});
+	hm.AddGroup({spec2.heuristics[0]});
+
+    cout << start << endl;
+    cout << goal << endl;
+    std::cout << "------------------------------------" << std::endl;
+	TASS2<TOH<numOfDisks>, TOHState<numOfDisks>> tas(toh, start, goal, &hm, &hm, samples);
+	tas.episode = episode;
+	tas.SetHeuristicUpdate(HUpdate<numOfDisks, pdb1Disks, 2>);
+    tas.SetAnchorSelection(selection);
+	//astar.SetPhi(phi);
+	//astar.SetHeuristic(&hm);
+    Timer timer, timer2, timer3;
+    timer.StartTimer();
+	tas.GetPath(path);
+    timer.EndTimer();
+	cout << "Info:" << endl;
+	cout << "Anchor Selection: " << selection << endl;
+	cout << "Heuristic: " << endl;
+	cout << "PDB size: " << pdb1Disks << endl;
+	cout << "episode length: " << episode << endl;
+	cout << "TAS: " << tas.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << path.size() << endl;
+}
+
+
+template<int numOfDisks, int pdb1Disks>
+void PlanningTest3(int seed_problem, GroupHeuristic<TOHState<numOfDisks>> hm)
+{
+    srandom(seed_problem);
+    TOH<numOfDisks> *toh = new TOH<numOfDisks>();
+    TOHState<numOfDisks> start, goal, pivot1, pivot2;
+    Heuristic<TOHState<numOfDisks>> hf, hb, h1, h2, h3, h4;
+    vector<TOHState<numOfDisks>> path, aPath, fPath, bPath;
+
+    start.counts[0] = start.counts[1] = start.counts[2] = start.counts[3] = 0;
+	for (int x = numOfDisks; x > 0; x--)
+	{
+		int whichPeg = random()%4;
+		start.disks[whichPeg][start.counts[whichPeg]] = x;
+		start.counts[whichPeg]++;
+	}
+    goal.counts[0] = goal.counts[1] = goal.counts[2] = goal.counts[3] = 0;
+	for (int x = numOfDisks; x > 0; x--)
+	{
+		int whichPeg = random()%4;
+		goal.disks[whichPeg][goal.counts[whichPeg]] = x;
+		goal.counts[whichPeg]++;
+	}
+	Heuristic<TOHState<numOfDisks>> spec1, spec2;
+	BuildSinglePDB<numOfDisks, pdb1Disks>(spec1, start);
+	BuildSinglePDB<numOfDisks, pdb1Disks>(spec2, goal);
+	hm.AddGroup({spec1.heuristics[0]});
+	hm.AddGroup({spec2.heuristics[0]});
+
+    cout << start << endl;
+    cout << goal << endl;
+    std::cout << "------------------------------------" << std::endl;
+	TTBS<TOH<numOfDisks>, TOHState<numOfDisks>> ttbs(toh, start, goal, &hm, &hm);
+    Timer timer, timer2, timer3;
+    timer.StartTimer();
+	ttbs.GetPath(path);
+    timer.EndTimer();
+	cout << "Info:" << endl;
+	cout << "Heuristic: " << endl;
+	cout << "PDB size: " << pdb1Disks << endl;
+	cout << "TTBS: " << ttbs.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << path.size() << endl;
+}
 
 
 template<int numOfDisks, int pdb1Disks>
@@ -441,23 +547,27 @@ void GBFSTest(int seed_problem, GroupHeuristic<TOHState<numOfDisks>> hm)
 }
 
 
-void STPTest(int problemSeed)
+void STPTest(int problemIndex, double &avg1, double &avg2)
 {
-    srandom(problemSeed);
+    //srandom(problemSeed);
 	//TemplateAStar<MNPuzzleState<5, 5>, slideDir, MNPuzzle<5,5>> astar;
 	MNPuzzle<4, 4> mnp;
 	MNPuzzleState<4, 4> start, goal;
-    vector<MNPuzzleState<4, 4>> path1, path2;
-    start = mnp.Generate_Random_Puzzle();
-    goal = mnp.Generate_Random_Puzzle();
+    vector<MNPuzzleState<4, 4>> path1, path2, path3;
+    start = STP::GetKorfInstance(problemIndex);
+    goal = STP::GetKorfInstance((problemIndex + 10) % 100);
     cout << mnp.HCost(start, goal) << endl;
     cout << start << endl;
     cout << goal << endl;
 
     TemplateAStar<MNPuzzleState<4, 4>, slideDir, MNPuzzle<4, 4>> astar;
     astar.SetPhi(Phi);
-    TASA<MNPuzzle<4, 4>, MNPuzzleState<4, 4>> tasa(&mnp, start, goal, &mnp, &mnp, 10);
-    Timer timer1, timer2;
+    TASS<MNPuzzle<4, 4>, MNPuzzleState<4, 4>> tasa(&mnp, start, goal, &mnp, &mnp, 8);
+	tasa.SetAnchorSelection(Closest);
+	RASS<MNPuzzle<4, 4>, MNPuzzleState<4, 4>> ras(&mnp, start, goal, &mnp, &mnp, 20);
+	ras.SetAnchorSelection(Closest);
+	TTBS<MNPuzzle<4, 4>, MNPuzzleState<4, 4>> ttbs(&mnp, start, goal, &mnp, &mnp);
+    Timer timer1, timer2, timer3;
     
     timer1.StartTimer();
     astar.GetPath(&mnp, start, goal, path1);
@@ -465,9 +575,97 @@ void STPTest(int problemSeed)
     cout << "GBFS: " << astar.GetNodesExpanded() << " " << timer1.GetElapsedTime() << " " << path1.size() << endl;
 
     timer2.StartTimer();
-    tasa.GetPath(path2);
+    ras.GetPath(path2);
     timer2.EndTimer();
-    cout << "TASA: " << tasa.GetNodesExpanded() << " " << timer2.GetElapsedTime() << " " << path2.size() << endl;
+    cout << "RASS: " << ras.GetNodesExpanded() << " " << timer2.GetElapsedTime() << " " << path2.size() << " " << ras.pathRatio << endl;
+
+	avg1 += astar.GetNodesExpanded();
+	avg2 += ras.GetNodesExpanded();
+	//timer3.StartTimer();
+    //ttbs.GetPath(path3);
+    //timer3.EndTimer();
+    //cout << "TTBS: " << ttbs.GetNodesExpanded() << " " << timer3.GetElapsedTime() << " " << path3.size() << endl;
+}
+
+
+void STPTest2(int problemIndex, double &avg1, double &avg2, double &avg3, double &avg4, string alg, int variant, int parameter)
+{
+    //srandom(problemSeed);
+	//TemplateAStar<MNPuzzleState<5, 5>, slideDir, MNPuzzle<5,5>> astar;
+	MNPuzzle<4, 4> mnp;
+	MNPuzzleState<4, 4> start, goal;
+    vector<MNPuzzleState<4, 4>> path1, path2, path3;
+    start = STP::GetKorfInstance(problemIndex);
+    goal = STP::GetKorfInstance((problemIndex + 10) % 100);
+    //cout << mnp.HCost(start, goal) << endl;
+    //cout << start << endl;
+    //cout << goal << endl;
+
+    TemplateAStar<MNPuzzleState<4, 4>, slideDir, MNPuzzle<4, 4>> astar;
+    astar.SetPhi(Phi);
+    TASS<MNPuzzle<4, 4>, MNPuzzleState<4, 4>> tasa(&mnp, start, goal, &mnp, &mnp, parameter);
+	tasa.SetAnchorSelection((kAnchorSelection)variant);
+	RASS<MNPuzzle<4, 4>, MNPuzzleState<4, 4>> ras(&mnp, start, goal, &mnp, &mnp, parameter);
+	ras.SetAnchorSelection((kAnchorSelection)variant);
+	TTBS<MNPuzzle<4, 4>, MNPuzzleState<4, 4>> ttbs(&mnp, start, goal, &mnp, &mnp);
+	DNode<MNPuzzle<4, 4>, MNPuzzleState<4, 4>> dnode(&mnp, start, goal, &mnp, &mnp, parameter);
+    Timer timer1, timer2, timer3;
+
+
+	if (alg == "tas")
+	{
+		timer1.StartTimer();
+    	tasa.GetPath(path1);
+    	timer1.EndTimer();
+		avg1 += tasa.GetNodesExpanded();
+		avg2 += timer1.GetElapsedTime();
+		avg3 += path1.size();
+		avg4 += min(tasa.pathRatio, 1.0 - tasa.pathRatio);
+		cout << tasa.GetNodesExpanded() << " " << timer1.GetElapsedTime() << " " << path1.size() << endl;
+	}
+	else if (alg =="ras")
+	{
+		timer1.StartTimer();
+    	ras.GetPath(path1);
+    	timer1.EndTimer();
+		avg1 += ras.GetNodesExpanded();
+		avg2 += timer1.GetElapsedTime();
+		avg3 += path1.size();
+		avg4 += min(ras.pathRatio, 1.0 - ras.pathRatio);
+		cout << ras.GetNodesExpanded() << " " << timer1.GetElapsedTime() << " " << path1.size() << endl;
+	}
+	else if (alg == "ttbs")
+	{
+		timer1.StartTimer();
+    	ttbs.GetPath(path1);
+    	timer1.EndTimer();
+		avg1 += ttbs.GetNodesExpanded();
+		avg2 += timer1.GetElapsedTime();
+		avg3 += path1.size();
+		avg4 += min(ttbs.pathRatio, 1.0 - ttbs.pathRatio);
+		cout << ttbs.GetNodesExpanded() << " " << timer1.GetElapsedTime() << " " << path1.size() << endl;
+	}
+	else if (alg == "dnode")
+	{
+		timer1.StartTimer();
+    	dnode.GetPath(path1);
+    	timer1.EndTimer();
+		avg1 += dnode.GetNodesExpanded();
+		avg2 += timer1.GetElapsedTime();
+		avg3 += path1.size();
+		avg4 += min(dnode.pathRatio, 1.0 - dnode.pathRatio);
+		cout << dnode.GetNodesExpanded() << " " << timer1.GetElapsedTime() << " " << path1.size() << endl;
+	}
+	else if (alg == "gbfs")
+	{
+		timer1.StartTimer();
+    	astar.GetPath(&mnp, start, goal, path1);
+    	timer1.EndTimer();
+		avg1 += astar.GetNodesExpanded();
+		avg2 += timer1.GetElapsedTime();
+		avg3 += path1.size();
+		cout << astar.GetNodesExpanded() << " " << timer1.GetElapsedTime() << " " << path1.size() << endl;
+	}
 }
 
 
@@ -500,8 +698,14 @@ int main(int argc, char* argv[])
     }
     */
    	
+	/*
    	int problemSize = stoi(argv[1]);
-	if (problemSize == 20)
+	if (problemSize == 16)
+	{
+		GroupHeuristic<TOHState<16>> gh;
+    	PlanningTest<16, 10>(stoi(argv[2]), 10, (kAnchorSelection)stoi(argv[3]), stoi(argv[4]), gh);
+	}
+	else if (problemSize == 20)
 	{
 		GroupHeuristic<TOHState<20>> gh;
     	PlanningTest<20, 12>(stoi(argv[2]), 10, (kAnchorSelection)stoi(argv[3]), stoi(argv[4]), gh);
@@ -536,10 +740,39 @@ int main(int argc, char* argv[])
 		GroupHeuristic<TOHState<32>> gh;
     	PlanningTest<32, 12>(stoi(argv[2]), 10, (kAnchorSelection)stoi(argv[3]), stoi(argv[4]), gh);
 	}
-    
-   	/*
-   	GroupHeuristic<TOHState<24>> gh;
-   	GBFSTest<24, 12>(stoi(argv[1]), gh);
+	*/
+
+
+	
+    const int psize = 20;
+	const int pdbsize = 12;
+
+	//GroupHeuristic<TOHState<psize>> gh3;
+    //PlanningTest3<psize, pdbsize>(stoi(argv[1]), gh3);
+
+	GroupHeuristic<TOHState<psize>> gh;
+    PlanningTest<psize, pdbsize>(stoi(argv[1]), 10, (kAnchorSelection)stoi(argv[2]), stoi(argv[3]), gh);
+
+	//GroupHeuristic<TOHState<psize>> gh1;
+    //PlanningTest2<psize, pdbsize>(stoi(argv[1]), 10, (kAnchorSelection2)stoi(argv[2]), stoi(argv[3]), gh1);
+   	
+   	GroupHeuristic<TOHState<psize>> gh2;
+   	GBFSTest<psize, pdbsize>(stoi(argv[1]), gh2);
+	
+
+	
+	/*
+	double avg1 = 0;
+	double avg2 = 0;
+	double avg3 = 0;
+	double avg4 = 0;
+	//STPTest(stoi(argv[1]), avg1, avg2);
+	
+	for (int i = 0; i < 100; i++)
+	{
+		STPTest2(i, avg1, avg2, avg3, avg4, argv[1], stoi(argv[2]), stoi(argv[3]));
+	}
+	std::cout << avg1 / 100.0 << " " << avg2 / 100.0 << " " << avg3 / 100.0 << std::endl;
 	*/
 	return 0;
 }

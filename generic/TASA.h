@@ -44,7 +44,8 @@ public:
 	std::vector<State> GetPath(State node, bool forward);
 	void ExtractPath(std::vector<State> &path);
 	bool validSolution;
-    double anchorH, anchorG;
+    double anchorH = 1000000;
+	double anchorG = 0;
 
 	//double comps = 0;
 
@@ -192,6 +193,7 @@ bool TASAFrontier<Env, State>::DoSingleSearchStep()
         anchor = bestCandidate;
         anchorH = hh;
         anchorG = gValues[bestCandidateHash];
+		//std::cout << "CHANGED" << std::endl;
     }
     else if (hh == anchorH)
     {
@@ -199,6 +201,7 @@ bool TASAFrontier<Env, State>::DoSingleSearchStep()
         {
             anchor = bestCandidate;
             anchorG = gValues[bestCandidateHash];
+			//std::cout << "CHANGED" << std::endl;
         }
     }
 	//anchor = bestCandidate;

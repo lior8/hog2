@@ -27,6 +27,25 @@ public:
     int loc = -1;
 };
 
+template<class State>
+struct OpenData
+{
+public:
+    State state;
+	bool valid;
+	uint64_t hash;
+	OpenData()
+	{
+
+	}
+	OpenData(State _state, bool _valid, uint64_t _hash)
+	{
+		state = _state;
+		valid = _valid;
+		hash = _hash;
+	}
+};
+
 template <class Env, class State>
 class TASSFrontier
 {
@@ -37,8 +56,8 @@ public:
 	std::vector<State> candidates;
 	std::vector<State> otherCandidates;
 	std::vector<State> children;
-	std::vector<State> open;
-	std::set<uint64_t> closed;
+	std::vector<OpenData<State>> open;
+	std::vector<State> firstPriority;
 	//std::unordered_map<uint64_t, double> gValues;
 	//std::unordered_map<uint64_t, State> parents;
 	//std::unordered_map<uint64_t, int> loc;
@@ -101,30 +120,18 @@ TASSFrontier<Env, State>::TASSFrontier(Env *_env, State _start, Heuristic<State>
     sampleCount = _sampleCount;
 	env = _env;
 	open.resize(0);
-	open.reserve(5000000);
+	open.reserve(100000);
 	h = _h;
 	start = _start;
     openClosed.clear();
-    openClosed.reserve(5000000);
-    //openClosed.max_load_factor(3.0);
-    //openClosed.max_load_factor(0.5);
-    //gValues.reserve(1000000);
-    //loc.reserve(1000000);
-    //parents.reserve(1000000);
-    //gValues.max_load_factor(3.0);
-    //loc.max_load_factor(3.0);
-    //parents.max_load_factor(3.0);
-	open.push_back(start);
-	//gValues[env->GetStateHash(start)] = 0;
-	//loc.clear();
-	//loc[env->GetStateHash(start)] = 0;
-	//loc.insert({env->GetStateHash(start), 0});
+    openClosed.reserve(100000);
+	auto shash = env->GetStateHash(start);
+	open.push_back(OpenData<State>(start, true, shash));
     OpenClosedData<State> data;
     data.g = 0;
     data.loc = 0;
     data.parent = start;
-    //openClosed[env->GetStateHash(start)] = data;
-    openClosed.insert({env->GetStateHash(start), data});
+    openClosed.insert({shash, data});
 	anchor = start;
 	numOfExp = 0;
 	validSolution = true;
@@ -160,30 +167,36 @@ bool TASSFrontier<Env, State>::DoSingleSearchStep()
 	}
 		
 	double minDist = 99999999;
-	State bestCandidate = open.back();
-	uint64_t bestCandidateHash = env->GetStateHash(bestCandidate);
+	auto back = open.back();
+	State bestCandidate = back.state;
+	uint64_t bestCandidateHash = back.hash;
 	int _samples = sampleCount;
 	int index = open.size() - 1;
+    int bestIndex = index;
     while (index >= 0 && _samples > 0)
     {
-        State c = open[index];
-        auto hash = env->GetStateHash(c);
+        if (!open[index].valid)
+        {
+            open.pop_back();
+            index--;
+            continue;
+        }
+		auto data = open[index];
+        State c = data.state;
+        auto hash = data.hash;
 		auto dist = HCost(c, other->anchor);
 		if (dist < minDist || dist == minDist && openClosed[hash].g > openClosed[bestCandidateHash].g)
 		{
 			minDist = dist;
 			bestCandidate = c;
-			bestCandidateHash = env->GetStateHash(bestCandidate);
+			bestCandidateHash = hash;
+            bestIndex = index;
 		}
         index--;
 		_samples--;
     }
-	open[openClosed[bestCandidateHash].loc] = open.back();
-	openClosed[env->GetStateHash(open.back())].loc = openClosed[bestCandidateHash].loc;
-	open.pop_back();
+	open[bestIndex].valid = false;
 	openClosed[bestCandidateHash].loc = -1;
-	//closed.insert(bestCandidateHash);
-	//_occurrences[int(HCost(bestCandidate, other->anchor))]++;
 
 	numOfExp++;
 	children.resize(0);
@@ -203,23 +216,19 @@ bool TASSFrontier<Env, State>::DoSingleSearchStep()
 			}
 			else if (ent->second.loc != -1)
 			{
-				open[ent->second.loc] = open.back();
-			    openClosed[env->GetStateHash(open.back())].loc = ent->second.loc;
-			    open[open.size() - 1] = neighbor;
+                open.push_back(open[ent->second.loc]);
+                open[ent->second.loc].valid = false;
 			    ent->second.loc = open.size() - 1;
 			}
 		}
 		else
 		{
-			//gValues[nhash] = g;
-			open.push_back(neighbor);
+			open.push_back(OpenData<State>(neighbor, true, nhash));
             OpenClosedData<State> data;
             data.g = g;
             data.loc = open.size() - 1;
             data.parent = bestCandidate;
             openClosed[nhash] = data;
-			//loc.insert({nhash, open.size() - 1});
-			//parents[nhash] = bestCandidate;
 		}
 	}
 
@@ -230,7 +239,7 @@ bool TASSFrontier<Env, State>::DoSingleSearchStep()
             break;
         case Closest:
 		{
-			//anchorH = HCost(anchor, other->start);
+			anchorH = HCost(anchor, other->start);
 			auto hh = HCost(bestCandidate, other->start);
             if (hh < anchorH || anchorH < 0)
             {
@@ -251,7 +260,7 @@ bool TASSFrontier<Env, State>::DoSingleSearchStep()
         case Random:
 		{
 			int random_index = rand_r(&seed) % open.size();
-            anchor = open[random_index];
+            anchor = open[random_index].state;
             break;
 		}
 		default:
@@ -284,6 +293,7 @@ private:
 	int turn = 0;
 public:
 	int episode = -1;
+    double pathRatio;
 	TASSFrontier<Env, State>* ff;
 	TASSFrontier<Env, State>* bf;
 	TASS();
@@ -348,6 +358,7 @@ public:
 		}
 		front.push_back(ff->start);
 		path.resize(0);
+        pathRatio = (double)front.size() / (double)(front.size() + back.size());
 		for (int i = front.size() - 1; i >= 1; i--)
 			path.push_back(front[i]);
 		for (int i = 0; i < back.size(); i++)
@@ -382,6 +393,8 @@ public:
 		if (!ff->validSolution || !bf->validSolution)
 			return;
 		ExtractPath(path);
+		//delete ff;
+		//delete bf;
 	}
 	void SetSeed(unsigned int seed)
 	{

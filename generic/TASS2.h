@@ -10,25 +10,30 @@
 #include "MR1PermutationPDB.h"
 #include <math.h>
 
-enum kAnchorSelection
+enum kAnchorSelection2
 {
-    Temporal,
-    Closest,
-    Random
+    Temporal2,
+    Closest2,
+    Random2
 };
 
 template<class State>
-struct OpenClosedData
+struct OpenClosedData2
 {
 public:
 
     double g = 0;
     State parent;
     int loc = -1;
+    int dir;
 };
 
+
+template<class Env, class State>
+class TASS2;
+
 template <class Env, class State>
-class TASSFrontier
+class TASS2Frontier
 {
 public:
     Env *env;
@@ -42,28 +47,29 @@ public:
 	//std::unordered_map<uint64_t, double> gValues;
 	//std::unordered_map<uint64_t, State> parents;
 	//std::unordered_map<uint64_t, int> loc;
-    std::unordered_map<uint64_t, OpenClosedData<State>> openClosed;
+    TASS2<Env, State>* tss;
+    //std::unordered_map<uint64_t, OpenClosedData2<State>>* openClosed;
 	std::vector<int> occurrences;
 	std::vector<int> _occurrences;
 	int numOfExp = 0;
 	State rendezvous;
-	TASSFrontier *other;
+	TASS2Frontier *other;
     int sampleCount;
 	State anchor;
 	State start;
     Heuristic<State> *h;
-	TASSFrontier(Env *_env, State _start, Heuristic<State> *h, int _sampleCount);
-	~TASSFrontier(){}
+	TASS2Frontier(Env *_env, State _start, Heuristic<State> *h, int _sampleCount, int _dir, TASS2<Env, State>* _tss);
+	~TASS2Frontier(){}
 	bool DoSingleSearchStep();
 	void GetPath(std::vector<State> &path);
 	void SetSeed(unsigned int seed);
 	std::vector<State> GetPath(State node, bool forward);
 	void ExtractPath(std::vector<State> &path);
 	bool validSolution;
-    double anchorH = -1;
-	double anchorG = 0;
+    double anchorH, anchorG;
 
-    kAnchorSelection anchorSelection;
+    kAnchorSelection2 anchorSelection;
+    int dir;
 
 	//double comps = 0;
 
@@ -96,35 +102,23 @@ public:
 
 
 template <class Env,  class State>
-TASSFrontier<Env, State>::TASSFrontier(Env *_env, State _start, Heuristic<State> *_h, int _sampleCount)
+TASS2Frontier<Env, State>::TASS2Frontier(Env *_env, State _start, Heuristic<State> *_h, int _sampleCount, int _dir, TASS2<Env, State>* _tss)
 {
+    tss = _tss;
+    dir = _dir;
     sampleCount = _sampleCount;
 	env = _env;
 	open.resize(0);
-	open.reserve(5000000);
 	h = _h;
 	start = _start;
-    openClosed.clear();
-    openClosed.reserve(5000000);
-    //openClosed.max_load_factor(3.0);
-    //openClosed.max_load_factor(0.5);
-    //gValues.reserve(1000000);
-    //loc.reserve(1000000);
-    //parents.reserve(1000000);
-    //gValues.max_load_factor(3.0);
-    //loc.max_load_factor(3.0);
-    //parents.max_load_factor(3.0);
+    //openClosed = _openClosed;
 	open.push_back(start);
-	//gValues[env->GetStateHash(start)] = 0;
-	//loc.clear();
-	//loc[env->GetStateHash(start)] = 0;
-	//loc.insert({env->GetStateHash(start), 0});
-    OpenClosedData<State> data;
+    OpenClosedData2<State> data;
     data.g = 0;
     data.loc = 0;
     data.parent = start;
-    //openClosed[env->GetStateHash(start)] = data;
-    openClosed.insert({env->GetStateHash(start), data});
+    data.dir = dir;
+    tss->openClosed1.insert({env->GetStateHash(start), data});
 	anchor = start;
 	numOfExp = 0;
 	validSolution = true;
@@ -132,14 +126,14 @@ TASSFrontier<Env, State>::TASSFrontier(Env *_env, State _start, Heuristic<State>
 
 
 template <class Env,  class State>
-void TASSFrontier<Env, State>::ExtractPath(std::vector<State> &path)
+void TASS2Frontier<Env, State>::ExtractPath(std::vector<State> &path)
 {
 	auto current = rendezvous;
 	while (true)
 	{
 		path.push_back(current);
-		if (openClosed.find(env->GetStateHash(current)) != openClosed.end())
-			current = openClosed[env->GetStateHash(current)].parent;
+		if (tss->openClosed1.find(env->GetStateHash(current)) != tss->openClosed1.end())
+			current = tss->openClosed1[env->GetStateHash(current)].parent;
 		else
 			break;
 	}
@@ -150,7 +144,7 @@ void TASSFrontier<Env, State>::ExtractPath(std::vector<State> &path)
 
 
 template <class Env,  class State>
-bool TASSFrontier<Env, State>::DoSingleSearchStep()
+bool TASS2Frontier<Env, State>::DoSingleSearchStep()
 {
 	if (open.size() == 0)
 	{
@@ -169,7 +163,7 @@ bool TASSFrontier<Env, State>::DoSingleSearchStep()
         State c = open[index];
         auto hash = env->GetStateHash(c);
 		auto dist = HCost(c, other->anchor);
-		if (dist < minDist || dist == minDist && openClosed[hash].g > openClosed[bestCandidateHash].g)
+		if (dist < minDist || dist == minDist && tss->openClosed1[hash].g > tss->openClosed1[bestCandidateHash].g)
 		{
 			minDist = dist;
 			bestCandidate = c;
@@ -178,10 +172,10 @@ bool TASSFrontier<Env, State>::DoSingleSearchStep()
         index--;
 		_samples--;
     }
-	open[openClosed[bestCandidateHash].loc] = open.back();
-	openClosed[env->GetStateHash(open.back())].loc = openClosed[bestCandidateHash].loc;
+	open[tss->openClosed1[bestCandidateHash].loc] = open.back();
+	tss->openClosed1[env->GetStateHash(open.back())].loc = tss->openClosed1[bestCandidateHash].loc;
 	open.pop_back();
-	openClosed[bestCandidateHash].loc = -1;
+	tss->openClosed1[bestCandidateHash].loc = -1;
 	//closed.insert(bestCandidateHash);
 	//_occurrences[int(HCost(bestCandidate, other->anchor))]++;
 
@@ -192,32 +186,43 @@ bool TASSFrontier<Env, State>::DoSingleSearchStep()
 	{
 		//occurrences[int(HCost(neighbor, other->anchor))]++;
 		auto nhash = env->GetStateHash(neighbor);
-		double g = openClosed[bestCandidateHash].g + env->GCost(bestCandidate, neighbor);
-        auto ent = openClosed.find(nhash);
-		if (ent != openClosed.end())
+		double g = tss->openClosed1[bestCandidateHash].g + env->GCost(bestCandidate, neighbor);
+        auto ent = tss->openClosed1.find(nhash);
+		if (ent != tss->openClosed1.end())
 		{
-			if (g < ent->second.g)
-			{
-				ent->second.g = g;
-				ent->second.parent = bestCandidate;
-			}
-			else if (ent->second.loc != -1)
-			{
-				open[ent->second.loc] = open.back();
-			    openClosed[env->GetStateHash(open.back())].loc = ent->second.loc;
-			    open[open.size() - 1] = neighbor;
-			    ent->second.loc = open.size() - 1;
-			}
+            if (ent->second.dir == dir)
+            {
+                if (g < ent->second.g)
+			    {
+			    	ent->second.g = g;
+			    	ent->second.parent = bestCandidate;
+			    }
+			    else
+			    {
+			    	open[ent->second.loc] = open.back();
+			        tss->openClosed1[env->GetStateHash(open.back())].loc = ent->second.loc;
+			        open[open.size() - 1] = neighbor;
+			        ent->second.loc = open.size() - 1;
+			    }
+            }
+            else
+            {
+                rendezvous = bestCandidate;
+                other->rendezvous = neighbor;
+                return true;
+            }
 		}
 		else
 		{
 			//gValues[nhash] = g;
+            std::cout << open.size() << " " << nhash << std::endl;
 			open.push_back(neighbor);
-            OpenClosedData<State> data;
+            OpenClosedData2<State> data;
             data.g = g;
             data.loc = open.size() - 1;
             data.parent = bestCandidate;
-            openClosed[nhash] = data;
+            data.dir = dir;
+            tss->openClosed1[nhash] = data;
 			//loc.insert({nhash, open.size() - 1});
 			//parents[nhash] = bestCandidate;
 		}
@@ -225,33 +230,33 @@ bool TASSFrontier<Env, State>::DoSingleSearchStep()
 
     switch (anchorSelection)
     {
-        case Temporal:
+        case Temporal2:
             anchor = bestCandidate;
             break;
-        case Closest:
+        case Closest2:
 		{
-			//anchorH = HCost(anchor, other->start);
+			anchorH = HCost(anchor, other->start);
 			auto hh = HCost(bestCandidate, other->start);
-            if (hh < anchorH || anchorH < 0)
+            if (hh < anchorH)
             {
                 anchor = bestCandidate;
                 anchorH = hh;
-                anchorG = openClosed[bestCandidateHash].g;
+                anchorG = tss->openClosed1[bestCandidateHash].g;
             }
             else if (hh == anchorH)
             {
-                if (openClosed[bestCandidateHash].g < anchorG)
+                if (tss->openClosed1[bestCandidateHash].g < anchorG)
                 {
                     anchor = bestCandidate;
-                    anchorG = openClosed[bestCandidateHash].g;
+                    anchorG = tss->openClosed1[bestCandidateHash].g;
                 }
             }
             break;
 		}
-        case Random:
+        case Random2:
 		{
-			int random_index = rand_r(&seed) % open.size();
-            anchor = open[random_index];
+			int Random2_index = rand_r(&seed) % open.size();
+            anchor = open[Random2_index];
             break;
 		}
 		default:
@@ -261,38 +266,42 @@ bool TASSFrontier<Env, State>::DoSingleSearchStep()
     
 	//anchor = bestCandidate;
     
-	if (other->openClosed.find(bestCandidateHash) != other->openClosed.end())// || bestCandidate == other->start)
+    /*
+	if ((*(other->openClosed)).find(bestCandidateHash) != (*(other->openClosed)).end())// || bestCandidate == other->start)
 	{
 		rendezvous = bestCandidate;
 		other->rendezvous = rendezvous;
 		return true;
 	}
+    */
 	return false;
 }
 
 
 template <class Env,  class State>
-void TASSFrontier<Env, State>::SetSeed(unsigned int seed)
+void TASS2Frontier<Env, State>::SetSeed(unsigned int seed)
 {
 	this->seed = seed;
 }
 
 template <class Env, class State>
-class TASS
+class TASS2
 {
 private:
 	int turn = 0;
 public:
 	int episode = -1;
-	TASSFrontier<Env, State>* ff;
-	TASSFrontier<Env, State>* bf;
-	TASS();
-	TASS(Env *_env, State _start, State _goal, Heuristic<State> *hf, Heuristic<State> *hb, int _sampleCount);
-	~TASS(){}
+
+    std::unordered_map<uint64_t, OpenClosedData2<State>> openClosed1, openClosed2;
+	TASS2Frontier<Env, State>* ff;
+	TASS2Frontier<Env, State>* bf;
+	TASS2();
+	TASS2(Env *_env, State _start, State _goal, Heuristic<State> *hf, Heuristic<State> *hb, int _sampleCount);
+	~TASS2(){}
 	void Init(Env *_env, State _start, State _goal, Heuristic<State> *hf, Heuristic<State> *hb, int _sampleCount)
 	{
-		ff = new TASSFrontier<Env, State>(_env, _start, hf, _sampleCount);
-		bf = new TASSFrontier<Env, State>(_env, _goal, hb, _sampleCount);
+		ff = new TASS2Frontier<Env, State>(_env, _start, hf, _sampleCount);
+		bf = new TASS2Frontier<Env, State>(_env, _goal, hb, _sampleCount);
 		ff->other = bf;
 		bf->other = ff;
 		ff.anchorH = ff.HCost(_start, _goal);
@@ -331,8 +340,8 @@ public:
 		while (true)
 		{
 			back.push_back(current);
-			if (bf->openClosed.find(bf->env->GetStateHash(current))->second.parent != current)
-				current = bf->openClosed[bf->env->GetStateHash(current)].parent;
+			if (openClosed1.find(bf->env->GetStateHash(current))->second.parent != current)
+				current = openClosed1[bf->env->GetStateHash(current)].parent;
 			else
 				break;
 		}
@@ -341,14 +350,14 @@ public:
 		while (true)
 		{
 			front.push_back(current);
-			if (ff->openClosed.find(ff->env->GetStateHash(current))->second.parent != current)
-				current = ff->openClosed[ff->env->GetStateHash(current)].parent;
+			if (openClosed1.find(ff->env->GetStateHash(current))->second.parent != current)
+				current = openClosed1[ff->env->GetStateHash(current)].parent;
 			else
 				break;
 		}
 		front.push_back(ff->start);
 		path.resize(0);
-		for (int i = front.size() - 1; i >= 1; i--)
+		for (int i = front.size() - 1; i >= 0; i--)
 			path.push_back(front[i]);
 		for (int i = 0; i < back.size(); i++)
 			path.push_back(back[i]);
@@ -381,14 +390,26 @@ public:
 		}
 		if (!ff->validSolution || !bf->validSolution)
 			return;
+        //std::cout << "Found" << std::endl;
 		ExtractPath(path);
+		//std::cout << "-------------" << std::endl;
+		//for (int i = 0; i < 100; i++)
+		//{
+		//	std::cout << i << ": " << ff->occurrences[i] + bf->occurrences[i] << std::endl;
+		//}
+		//std::cout << "-------------" << std::endl;
+		//for (int i = 0; i < 100; i++)
+		//{
+		//	std::cout << i << ": " << ff->_occurrences[i] + bf->_occurrences[i] << std::endl;
+		//}
+		//std::cout << "-------------" << std::endl;
 	}
 	void SetSeed(unsigned int seed)
 	{
 		this.seed = seed;
 	}
 
-    void SetAnchorSelection(kAnchorSelection selection)
+    void SetAnchorSelection(kAnchorSelection2 selection)
     {
         ff->anchorSelection = selection;
         bf->anchorSelection = selection;
@@ -397,10 +418,11 @@ public:
 
 
 template <class Env, class State>
-TASS<Env, State>::TASS(Env *_env, State _start, State _goal, Heuristic<State> *hf, Heuristic<State> *hb, int _sampleCount)
+TASS2<Env, State>::TASS2(Env *_env, State _start, State _goal, Heuristic<State> *hf, Heuristic<State> *hb, int _sampleCount)
 {
-	ff = new TASSFrontier<Env, State>(_env, _start, hf, _sampleCount);
-	bf = new TASSFrontier<Env, State>(_env, _goal, hb, _sampleCount);
+    openClosed1.clear();
+	ff = new TASS2Frontier<Env, State>(_env, _start, hf, _sampleCount, 1, this);
+	bf = new TASS2Frontier<Env, State>(_env, _goal, hb, _sampleCount, 2, this);
 	ff->other = bf;
 	bf->other = ff;
 }
