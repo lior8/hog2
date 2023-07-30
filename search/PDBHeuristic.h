@@ -33,7 +33,7 @@ enum PDBLookupType {
 };
 
 const int coarseSize = 1024;
-const int maxThreads = 32; // TODO: This isn't enforced in a static assert
+const int maxThreads = 64; // TODO: This isn't enforced in a static assert
 
 template <class abstractState, class abstractAction, class abstractEnvironment, class state = abstractState, uint64_t pdbBits = 8>
 class PDBHeuristic : public Heuristic<state> {

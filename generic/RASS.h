@@ -255,7 +255,7 @@ bool RASSFrontier<Env, State>::DoSingleSearchStep()
             }
             else if (hh == anchorH)
             {
-                if (openClosed[bestCandidateHash].g > anchorG)
+                if (openClosed[bestCandidateHash].g < anchorG)
                 {
                     anchor = bestCandidate;
                     anchorG = openClosed[bestCandidateHash].g;

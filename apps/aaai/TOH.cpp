@@ -115,9 +115,6 @@ class GroupHeuristic : public Heuristic<state>
 };
 
 
-
-
-
 template <int numDisks, int pdb1Disks, int pdb2Disks = numDisks-pdb1Disks>
 Heuristic<TOHState<numDisks>> *BuildPDB(const TOHState<numDisks> &goal)
 {
@@ -147,50 +144,6 @@ Heuristic<TOHState<numDisks>> *BuildPDB(const TOHState<numDisks> &goal)
 	return h;
 }
 
-typedef MR1PermutationPDB<MNPuzzleState<4, 4>, slideDir, MNPuzzle<4, 4>> STPPDB;
-void MakeSTPPDBs(MNPuzzleState<4, 4> g, Heuristic<MNPuzzleState<4, 4>> *h, MNPuzzle<4,4> *mnp)
-{
-	std::vector<int> p1 = {0,1,2,3};
-	std::vector<int> p2 = {0,4,5,6,7};
-	std::vector<int> p3 = {0,8,9,10,11};
-	std::vector<int> p4 = {0,12,13,14,15};
-
-	std::vector<int> p5 = {0,4,8,12};
-	std::vector<int> p6 = {0,1,5,9,13};
-	std::vector<int> p7 = {0,2,6,10,14};
-	std::vector<int> p8 = {0,3,7,11,15};
-
-	STPPDB *pdb1r = new STPPDB(mnp, g, p1);
-	STPPDB *pdb2r = new STPPDB(mnp, g, p2);
-	STPPDB *pdb3r = new STPPDB(mnp, g, p3);
-	STPPDB *pdb4r = new STPPDB(mnp, g, p4);
-	STPPDB *pdb1c = new STPPDB(mnp, g, p5);
-	STPPDB *pdb2c = new STPPDB(mnp, g, p6);
-	STPPDB *pdb3c = new STPPDB(mnp, g, p7);
-	STPPDB *pdb4c = new STPPDB(mnp, g, p8);
-
-	pdb1r->BuildPDB(g, std::thread::hardware_concurrency(), false);
-	pdb2r->BuildPDB(g, std::thread::hardware_concurrency(), false);
-	pdb3r->BuildPDB(g, std::thread::hardware_concurrency(), false);
-	pdb4r->BuildPDB(g, std::thread::hardware_concurrency(), false);
-	pdb1c->BuildPDB(g, std::thread::hardware_concurrency(), false);
-	pdb2c->BuildPDB(g, std::thread::hardware_concurrency(), false);
-	pdb3c->BuildPDB(g, std::thread::hardware_concurrency(), false);
-	pdb4c->BuildPDB(g, std::thread::hardware_concurrency(), false);
-
-	h->lookups.resize(0);
-	h->heuristics.resize(0);
-	//h.heuristics.push_back(&mnp);
-	h->heuristics.push_back(pdb1r);
-	h->heuristics.push_back(pdb2r);
-	h->heuristics.push_back(pdb3r);
-	h->heuristics.push_back(pdb4r);
-	h->heuristics.push_back(pdb1c);
-	h->heuristics.push_back(pdb2c);
-	h->heuristics.push_back(pdb3c);
-	h->heuristics.push_back(pdb4c);
-}
-
 template <int numDisks, int pdb1Disks, int pdb2Disks = numDisks-pdb1Disks>
 void BuildSinglePDB(Heuristic<TOHState<numDisks>> &h, const TOHState<numDisks> &pivot1)
 {
@@ -207,19 +160,6 @@ void BuildSinglePDB(Heuristic<TOHState<numDisks>> &h, const TOHState<numDisks> &
 	h.lookups.resize(0);
 	h.heuristics.resize(0);
 	h.heuristics.push_back(pdb2);
-}
-
-template<int numOfDisks, int pdb1Disks>
-void BuildTOHPDB(TOHState<numOfDisks> start, TOHState<numOfDisks> goal, TOHState<numOfDisks> aux, GroupHeuristic<TOHState<numOfDisks>> &hm)
-{
-    TOH<numOfDisks> *toh = new TOH<numOfDisks>();
-	Heuristic<TOHState<numOfDisks>> spec1, spec2, spec3;
-	BuildSinglePDB<numOfDisks, pdb1Disks>(spec1, start);
-	BuildSinglePDB<numOfDisks, pdb1Disks>(spec2, goal);
-	BuildSinglePDB<numOfDisks, pdb1Disks>(spec3, aux);
-	hm.AddGroup({spec1.heuristics[0]});
-	hm.AddGroup({spec2.heuristics[0]});
-	hm.AddGroup({spec3.heuristics[0]});
 }
 
 template<int numDisks, int pdb1Disks, int maxPivots = 5>
@@ -252,28 +192,6 @@ void HUpdate(TOHState<numDisks> s, TOHState<numDisks> g, Heuristic<TOHState<numD
 	mhh->AddGroup({pdb2});
 	mhh->AddGroup({pdb4});
 	//mhh->ClearCounts();
-	h = mhh;
-}
-
-
-void STPHUpdate(MNPuzzleState<4, 4> s, MNPuzzleState<4, 4> g, Heuristic<MNPuzzleState<4, 4>>*& h)
-{
-	GroupHeuristic<MNPuzzleState<4, 4>>* mhh;
-	mhh = (GroupHeuristic<MNPuzzleState<4, 4>>*)h;
-	//cout << mhh->groups.size() << endl;
-	MNPuzzle<4, 4>* mnp = new MNPuzzle<4, 4>();
-	Heuristic<MNPuzzleState<4, 4>>* hf = new Heuristic<MNPuzzleState<4, 4>>();
-	Heuristic<MNPuzzleState<4, 4>>* hb = new Heuristic<MNPuzzleState<4, 4>>();
-
-	MakeSTPPDBs(s, hf, mnp);
-	MakeSTPPDBs(g, hb, mnp);
-	
-	while(mhh->groups.size() > 2)
-	{
-		mhh->RemoveGroup(mhh->groups.size() - 1);
-	}
-	mhh->AddGroup({hf->heuristics[0], hf->heuristics[1], hf->heuristics[2], hf->heuristics[3], hf->heuristics[4], hf->heuristics[5], hf->heuristics[6], hf->heuristics[7]});
-	mhh->AddGroup({hb->heuristics[0], hb->heuristics[1], hb->heuristics[2], hb->heuristics[3], hb->heuristics[4], hb->heuristics[5], hb->heuristics[6], hb->heuristics[7]});
 	h = mhh;
 }
 
@@ -437,15 +355,14 @@ void TASOptTest(int problemSeed)
 */
 
 template<int numOfDisks, int pdb1Disks>
-void PlanningTest(int seed_problem, int samples, kAnchorSelection selection, int episode, GroupHeuristic<TOHState<numOfDisks>> &hm)
+void PlanningTest(int seed_problem, int samples, kAnchorSelection selection, int episode, GroupHeuristic<TOHState<numOfDisks>> hm)
 {
 	std::cout << "TAS(" << samples << ")" << std::endl;
     srandom(seed_problem);
     TOH<numOfDisks> *toh = new TOH<numOfDisks>();
-    TOHState<numOfDisks> start, goal, aux;
+    TOHState<numOfDisks> start, goal, pivot1, pivot2;
     Heuristic<TOHState<numOfDisks>> hf, hb, h1, h2, h3, h4;
     vector<TOHState<numOfDisks>> path, aPath, fPath, bPath;
-	//aux.Reset();
 
     start.counts[0] = start.counts[1] = start.counts[2] = start.counts[3] = 0;
 	for (int x = numOfDisks; x > 0; x--)
@@ -461,24 +378,11 @@ void PlanningTest(int seed_problem, int samples, kAnchorSelection selection, int
 		goal.disks[whichPeg][goal.counts[whichPeg]] = x;
 		goal.counts[whichPeg]++;
 	}
-	/*
-	aux.counts[0] = aux.counts[1] = aux.counts[2] = aux.counts[3] = 0;
-	for (int x = numOfDisks; x > 0; x--)
-	{
-		int whichPeg = random()%4;
-		aux.disks[whichPeg][aux.counts[whichPeg]] = x;
-		aux.counts[whichPeg]++;
-	}
-	*/
-	
-	Heuristic<TOHState<numOfDisks>> spec1, spec2, spec3;
+	Heuristic<TOHState<numOfDisks>> spec1, spec2;
 	BuildSinglePDB<numOfDisks, pdb1Disks>(spec1, start);
 	BuildSinglePDB<numOfDisks, pdb1Disks>(spec2, goal);
 	hm.AddGroup({spec1.heuristics[0]});
 	hm.AddGroup({spec2.heuristics[0]});
-	
-
-	//BuildTOHPDB<numOfDisks, pdb1Disks>(start, goal, aux, hm);
 
     cout << start << endl;
     cout << goal << endl;
@@ -486,7 +390,7 @@ void PlanningTest(int seed_problem, int samples, kAnchorSelection selection, int
 	TASS<TOH<numOfDisks>, TOHState<numOfDisks>> tas(toh, start, goal, &hm, &hm, samples);
 	tas.episode = episode;
 	tas.SetHeuristicUpdate(HUpdate<numOfDisks, pdb1Disks, 2>);
-    tas.SetAnchorSelection(selection, Fixed);
+    tas.SetAnchorSelection(selection);
     Timer timer, timer2, timer3;
     timer.StartTimer();
 	tas.GetPath(path);
@@ -714,7 +618,7 @@ void STPTest2(int problemIndex, double &avg1, double &avg2, double &avg3, double
 		avg1 += tasa.GetNodesExpanded();
 		avg2 += timer1.GetElapsedTime();
 		avg3 += path1.size();
-		avg4 += tasa.pathRatio;
+		avg4 += min(tasa.pathRatio, 1.0 - tasa.pathRatio);
 		cout << tasa.GetNodesExpanded() << " " << timer1.GetElapsedTime() << " " << path1.size() << endl;
 	}
 	else if (alg =="ras")
@@ -725,7 +629,7 @@ void STPTest2(int problemIndex, double &avg1, double &avg2, double &avg3, double
 		avg1 += ras.GetNodesExpanded();
 		avg2 += timer1.GetElapsedTime();
 		avg3 += path1.size();
-		avg4 += ras.pathRatio;
+		avg4 += min(ras.pathRatio, 1.0 - ras.pathRatio);
 		cout << ras.GetNodesExpanded() << " " << timer1.GetElapsedTime() << " " << path1.size() << endl;
 	}
 	else if (alg == "ttbs")
@@ -736,7 +640,7 @@ void STPTest2(int problemIndex, double &avg1, double &avg2, double &avg3, double
 		avg1 += ttbs.GetNodesExpanded();
 		avg2 += timer1.GetElapsedTime();
 		avg3 += path1.size();
-		avg4 += ttbs.pathRatio;
+		avg4 += min(ttbs.pathRatio, 1.0 - ttbs.pathRatio);
 		cout << ttbs.GetNodesExpanded() << " " << timer1.GetElapsedTime() << " " << path1.size() << endl;
 	}
 	else if (alg == "dnode")
@@ -747,7 +651,7 @@ void STPTest2(int problemIndex, double &avg1, double &avg2, double &avg3, double
 		avg1 += dnode.GetNodesExpanded();
 		avg2 += timer1.GetElapsedTime();
 		avg3 += path1.size();
-		avg4 += dnode.pathRatio;
+		avg4 += min(dnode.pathRatio, 1.0 - dnode.pathRatio);
 		cout << dnode.GetNodesExpanded() << " " << timer1.GetElapsedTime() << " " << path1.size() << endl;
 	}
 	else if (alg == "gbfs")
@@ -760,50 +664,6 @@ void STPTest2(int problemIndex, double &avg1, double &avg2, double &avg3, double
 		avg3 += path1.size();
 		cout << astar.GetNodesExpanded() << " " << timer1.GetElapsedTime() << " " << path1.size() << endl;
 	}
-}
-
-
-
-
-void STPPDBTest(int problemIndex, int episode)
-{
-    //srandom(problemSeed);
-	//TemplateAStar<MNPuzzleState<5, 5>, slideDir, MNPuzzle<5,5>> astar;
-	MNPuzzle<4, 4> *mnp = new MNPuzzle<4, 4>();
-	MNPuzzleState<4, 4> start, goal;
-    vector<MNPuzzleState<4, 4>> path1, path2, path3;
-    start = STP::GetKorfInstance(problemIndex);
-    goal = STP::GetKorfInstance((problemIndex + 10) % 100);
-
-	Heuristic<MNPuzzleState<4, 4>>* hf = new Heuristic<MNPuzzleState<4, 4>>();
-	Heuristic<MNPuzzleState<4, 4>>* hb = new Heuristic<MNPuzzleState<4, 4>>();
-
-
-	GroupHeuristic<MNPuzzleState<4, 4>> hm;
-	MakeSTPPDBs(start, hf, mnp);
-	MakeSTPPDBs(goal, hb, mnp);
-	hm.AddGroup({hf->heuristics[0], hf->heuristics[1], hf->heuristics[2], hf->heuristics[3], hf->heuristics[4], hf->heuristics[5], hf->heuristics[6], hf->heuristics[7]});
-	hm.AddGroup({hb->heuristics[0], hb->heuristics[1], hb->heuristics[2], hb->heuristics[3], hb->heuristics[4], hb->heuristics[5], hb->heuristics[6], hb->heuristics[7]});
-
-    TemplateAStar<MNPuzzleState<4, 4>, slideDir, MNPuzzle<4, 4>> astar;
-    astar.SetPhi(Phi);
-	astar.SetHeuristic(&hm);
-    TASS<MNPuzzle<4, 4>, MNPuzzleState<4, 4>> tas(mnp, start, goal, &hm, &hm, 10);
-	tas.SetAnchorSelection(Anchor);
-	tas.SetHeuristicUpdate(STPHUpdate);
-	tas.episode = episode;
-
-    Timer timer1, timer2, timer3;
-
-
-	timer1.StartTimer();
-    tas.GetPath(path1);
-    timer1.EndTimer();
-	cout << tas.GetNodesExpanded() << " " << timer1.GetElapsedTime() << " " << path1.size() << endl;
-	timer2.StartTimer();
-    astar.GetPath(mnp, start, goal, path2);
-    timer2.EndTimer();
-	cout << astar.GetNodesExpanded() << " " << timer2.GetElapsedTime() << " " << path2.size() << endl;
 }
 
 
@@ -879,32 +739,27 @@ int main(int argc, char* argv[])
     	PlanningTest<32, 12>(stoi(argv[2]), 10, (kAnchorSelection)stoi(argv[3]), stoi(argv[4]), gh);
 	}
 	
-	*/
+
 
 	
-    const int psize = 20;
-	const int pdbsize = 10;
+    const int psize = 14;
+	const int pdbsize = 7;
 
 	//GroupHeuristic<TOHState<psize>> gh3;
     //PlanningTest3<psize, pdbsize>(stoi(argv[1]), gh3);
 
-	if (stoi(argv[1]) == 1)
-	{
-		GroupHeuristic<TOHState<psize>> gh2;
-   		GBFSTest<psize, pdbsize>(stoi(argv[2]), gh2);
-	}
-	else
-	{
-		GroupHeuristic<TOHState<psize>> gh;
-    	PlanningTest<psize, pdbsize>(stoi(argv[2]), 10, (kAnchorSelection)stoi(argv[3]), stoi(argv[4]), gh);
-	}
-	
+	GroupHeuristic<TOHState<psize>> gh2;
+   	GBFSTest<psize, pdbsize>(stoi(argv[1]), gh2);
+
+	GroupHeuristic<TOHState<psize>> gh;
+    PlanningTest<psize, pdbsize>(stoi(argv[1]), 10, (kAnchorSelection)stoi(argv[2]), stoi(argv[3]), gh);
 	
 	//GroupHeuristic<TOHState<psize>> gh1;
     //PlanningTest2<psize, pdbsize>(stoi(argv[1]), 10, (kAnchorSelection2)stoi(argv[2]), stoi(argv[3]), gh1);
+
+   	*/
 	
 	
-	/*
 	double avg1 = 0;
 	double avg2 = 0;
 	double avg3 = 0;
@@ -916,8 +771,6 @@ int main(int argc, char* argv[])
 		STPTest2(i, avg1, avg2, avg3, avg4, argv[1], stoi(argv[2]), stoi(argv[3]));
 	}
 	std::cout << avg1 / 100.0 << " " << avg2 / 100.0 << " " << avg3 / 100.0 << std::endl;
-	*/
-
-	//STPPDBTest(stoi(argv[1]), stoi(argv[2]));
+	
 	return 0;
 }

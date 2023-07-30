@@ -278,7 +278,7 @@ public:
 			path.push_back(front[i]);
 		for (int i = 0; i < back.size(); i++)
 			path.push_back(back[i]);
-		pathRatio = (double)front.size() / (double)back.size();
+		pathRatio = min((double)front.size(), (double)back.size())/(double)path.size();
 	}
 	void GetPath(std::vector<State> &path)
 	{

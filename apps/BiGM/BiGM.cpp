@@ -18,6 +18,7 @@
 #include "RASFast.h"
 #include "DNode.h"
 #include "TTBS.h"
+#include "TASS4.h"
 
 
 using namespace std;
@@ -1018,7 +1019,7 @@ void DNodeTest(string scenarioPath, int problemIndex)
 }
 
 
-void QuickTest(string scenarioPath)
+void QuickTest(string scenarioPath, int anchorSelection)
 {
 	const char* mapsDir = "/home/sepehr3/projects/def-nathanst-ab/sepehr3/hog2_AS";
 	const char* scenariosDir = "/home/sepehr3/projects/def-nathanst-ab/sepehr3/hog2_AS/scenarios";
@@ -1037,10 +1038,14 @@ void QuickTest(string scenarioPath)
 	string mn = last.GetMapName();
 
 
-    double avg1, avg2;
-	double t1, t2;
+    double avg1, avg2, avg3;
+	double t1, t2, t3;
+	avg1 = 0;
+	avg2 = 0;
+	avg3 = 0;
 	t1 = 0;
 	t2 = 0;
+	t3 = 0;
     int count = 0;
 
     for (int i = 0; i < sl->GetNumExperiments(); i++)
@@ -1054,26 +1059,39 @@ void QuickTest(string scenarioPath)
         goal.y = exp.GetGoalY();
 	    cout << start << " " << goal << " " << exp.GetXScale() << " " << exp.GetYScale() << endl; 
 	    TTBS<MapEnvironment, xyLoc> ttbs(env, start, goal, env, env);
-        TAS<MapEnvironment, xyLoc> tas(env, start, goal, env, env, 10);
-	    std::vector<xyLoc> thePath, thePath2;
-        Timer timer1, timer2;
+        TASS<MapEnvironment, xyLoc> tas(env, start, goal, env, env, 10);
+		TemplateAStar<xyLoc, tDirection, MapEnvironment> astar;
+		astar.SetPhi(phi);
+		//TASS<MapEnvironment, xyLoc> tas(env, start, goal, env, env, 10);
+		tas.SetAnchorSelection((kAnchorSelection)anchorSelection);
+	    std::vector<xyLoc> thePath, thePath2, thePath3;
+        Timer timer1, timer2, timer3;
         timer1.StartTimer();
         ttbs.GetPath(thePath);
 	    timer1.EndTimer();
         timer2.StartTimer();
         tas.GetPath(thePath2);
         timer2.EndTimer();
+		timer3.StartTimer();
+		astar.GetPath(env, start, goal, thePath3);
+		timer3.EndTimer();
+		cout << "TTBS: " << ttbs.GetNodesExpanded() << " TAS: " << tas.GetNodesExpanded() << " GBFS: " << astar.GetNodesExpanded() << endl;
 
         avg1 += ttbs.GetNodesExpanded();
         avg2 += tas.GetNodesExpanded();
+		avg3 += astar.GetNodesExpanded();
 		t1 += timer1.GetElapsedTime();
 		t2 += timer2.GetElapsedTime();
+		t3 += timer3.GetElapsedTime();
         count++;
 
+		delete tas.ff;
+		delete tas.bf;
     }
 
 	std::cout << "TTBS: " << avg1/count << " " << t1/count << std::endl;
 	std::cout << "TAS: " << avg2/count << " " << t2/count << std::endl;
+	std::cout << "GBFS: " << avg3/count << " " << t3/count << std::endl;
     
 
 	delete map;
@@ -1185,7 +1203,7 @@ int main(int argc, char *argv[])
 	//TASATest(argv[1], stoi(argv[2]), 0, 100000);
 	//ExstensiveTest(argv[1], stoi(argv[2]), 0, 100000, argv[3]);
     //DNodeTest(argv[1], stoi(argv[2]));
-    QuickTest(argv[1]);
+    QuickTest(argv[1], stoi(argv[2]));
 	//DrawTest(argv[1], stoi(argv[2]), stoi(argv[3]));
 
 	//Timer t;

@@ -6,5 +6,6 @@ enum kAnchorSelection
     Temporal,
     Closest,
     Random,
-	Fixed
+	Fixed,
+    Anchor
 };

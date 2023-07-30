@@ -57,6 +57,7 @@ public:
 	bool validSolution;
     double anchorH = -1;
 	double anchorG = 0;
+	int anchorUpdateCounter;
 
     kAnchorSelection anchorSelection;
 
@@ -124,6 +125,7 @@ TASSFrontier<Env, State>::TASSFrontier(Env *_env, State _start, Heuristic<State>
 	anchor = start;
 	numOfExp = 0;
 	validSolution = true;
+	anchorUpdateCounter = 100;
 }
 
 
@@ -236,12 +238,15 @@ bool TASSFrontier<Env, State>::DoSingleSearchStep()
 		{
 			
 			//anchorH = HCost(anchor, other->start);
+			
+			
 			auto hh = HCost(bestCandidate, other->start);
             if (hh < anchorH || anchorH < 0)
             {
                 anchor = bestCandidate;
                 anchorH = hh;
                 anchorG = openClosed[bestCandidateHash].g;
+				//std::cout << numOfExp << ": " << HCost(anchor, other->anchor) << " " << HCost(anchor, start) << " " << HCost(other->anchor, start) << " " << HCost(anchor, other->start) << " " << HCost(other->anchor, other->start) << std::endl;
             }
             else if (hh == anchorH)
             {
@@ -249,28 +254,35 @@ bool TASSFrontier<Env, State>::DoSingleSearchStep()
                 {
                     anchor = bestCandidate;
                     anchorG = openClosed[bestCandidateHash].g;
+					//std::cout << numOfExp << ": " << HCost(anchor, other->anchor) << " " << HCost(anchor, start) << " " << HCost(other->anchor, start) << " " << HCost(anchor, other->start) << " " << HCost(other->anchor, other->start) << std::endl;
                 }
             }
 			
+
 			/*
-			auto hh = HCost(bestCandidate, other->start);
-			if (openClosed[bestCandidateHash].g > anchorG)
-            {
-                anchor = bestCandidate;
-                anchorH = hh;
-                anchorG = openClosed[bestCandidateHash].g;
-            }
-            else if (openClosed[bestCandidateHash].g == anchorG)
-            {
-                if (hh < anchorH)
-                {
-                    anchor = bestCandidate;
-                    anchorG = openClosed[bestCandidateHash].g;
-					anchorH = hh;
-                }
-            }
+			if (HCost(bestCandidate, other->anchor) < HCost(anchor, other->anchor))
+			{
+				anchor = bestCandidate;
+				std::cout << HCost(anchor, other->anchor) << " " << HCost(anchor, start) << " " << HCost(other->anchor, start) << " " << HCost(anchor, other->start) << " " << HCost(other->anchor, other->start) << std::endl;
+			}
+			else if (HCost(bestCandidate, other->anchor) == HCost(anchor, other->anchor))
+			{
+				if (HCost(bestCandidate, start) + HCost(bestCandidate, other->start) < HCost(anchor, start) + HCost(anchor, other->start))
+				{
+					anchor = bestCandidate;
+					std::cout << HCost(anchor, other->anchor) << " " << HCost(anchor, start) << " " << HCost(other->anchor, start) << " " << HCost(anchor, other->start) << " " << HCost(other->anchor, other->start) << std::endl;
+				}
+			}
 			*/
-            break;
+			
+			//if (numOfExp % 10000 == 0)
+			//{
+			//	anchor = bestCandidate;
+			//	std::cout << HCost(anchor, other->anchor) << " " << HCost(anchor, start) << " " << HCost(other->anchor, start) << " " << HCost(anchor, other->start) << " " << HCost(other->anchor, other->start) << std::endl;
+			//}
+				
+            
+			break;
 		}
         case Random:
 		{
@@ -280,6 +292,16 @@ bool TASSFrontier<Env, State>::DoSingleSearchStep()
 		}
 		case Fixed:
 		{
+			break;
+		}
+		case Anchor:
+		{
+			if (HCost(bestCandidate, other->anchor) < HCost(anchor, other->anchor))
+            {
+                anchor = bestCandidate;
+                anchorG = openClosed[bestCandidateHash].g;
+				//std::cout << "New anchor: " << anchorH << " " << anchorG << endl;
+            }
 			break;
 		}
 		default:
@@ -382,7 +404,7 @@ public:
 			path.push_back(front[i]);
 		for (int i = 0; i < back.size(); i++)
 			path.push_back(back[i]);
-		pathRatio = (double)front.size()/(double)path.size();
+		pathRatio = min((double)front.size(), (double)back.size())/(double)path.size();
 	}
 	void GetPath(std::vector<State> &path)
 	{
@@ -402,7 +424,7 @@ public:
 				ff->h = bf->h;
 				//std::cout << "TEST: " << bf->h->HCost(ff->anchor, bf->anchor) << std::endl;
 				std::cout << "episode(" << episode << "): " << count / episode << std::endl;
-				std::cout << ff->HCost(ff->anchor, bf->start) << " " << ff->anchorH << std::endl;
+				//std::cout << ff->HCost(ff->anchor, bf->start) << " " << ff->anchorH << std::endl;
 			}
 			count++;
 			if (DoSingleSearchStep())
@@ -419,7 +441,13 @@ public:
 		this.seed = seed;
 	}
 
-    void SetAnchorSelection(kAnchorSelection selection)
+    void SetAnchorSelection(kAnchorSelection selection, kAnchorSelection selection2)
+    {
+        ff->anchorSelection = selection;
+        bf->anchorSelection = selection2;
+    }
+
+	void SetAnchorSelection(kAnchorSelection selection)
     {
         ff->anchorSelection = selection;
         bf->anchorSelection = selection;
