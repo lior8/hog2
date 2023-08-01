@@ -84,7 +84,7 @@ public:
 	void BuildPDBForward(const state &goal, int numThreads, bool useCoarseOpen = true, bool verbose = false);
 	void BuildPDBForward(const std::vector<state> &goal, int numThreads, bool useCoarseOpen = true, bool verbose = false);
 	void BuildPDBBackward(const state &goal, int numThreads);
-	void BuildPDBForwardBackward(const state &goal, int numThreads, bool verbose);
+	void BuildPDBForwardBackward(const state &goal, int numThreads, bool verbose = true);
 
 	void BuildAdditivePDB(const state &goal, int numThreads, bool useCourseOpen = true);
 
