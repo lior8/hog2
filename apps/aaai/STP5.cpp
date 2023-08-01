@@ -553,7 +553,7 @@ void PlanningTest2(int seed_problem, int samples, kAnchorSelection2 selection, i
 
 
 template<int numOfDisks, int pdb1Disks>
-void PlanningTest3(int seed_problem, GroupHeuristic<TOHState<numOfDisks>> hm)
+void PlanningTest3(int seed_problem, int lifo, GroupHeuristic<TOHState<numOfDisks>> hm)
 {
     srandom(seed_problem);
     TOH<numOfDisks> *toh = new TOH<numOfDisks>();
@@ -584,7 +584,8 @@ void PlanningTest3(int seed_problem, GroupHeuristic<TOHState<numOfDisks>> hm)
     cout << start << endl;
     cout << goal << endl;
     std::cout << "------------------------------------" << std::endl;
-	DNode<TOH<numOfDisks>, TOHState<numOfDisks>> ttbs(toh, start, goal, &hm, &hm, 1000);
+	//DNode<TOH<numOfDisks>, TOHState<numOfDisks>> ttbs(toh, start, goal, &hm, &hm, 100);
+	TTBS<TOH<numOfDisks>, TOHState<numOfDisks>> ttbs(toh, start, goal, &hm, &hm, lifo);
     Timer timer, timer2, timer3;
     timer.StartTimer();
 	ttbs.GetPath(path);
@@ -882,7 +883,7 @@ int main(int argc, char* argv[])
 	*/
 
 	
-    const int psize = 20;
+    const int psize = 14;
 	const int pdbsize = 10;
 
 	//GroupHeuristic<TOHState<psize>> gh3;
@@ -893,10 +894,15 @@ int main(int argc, char* argv[])
 		GroupHeuristic<TOHState<psize>> gh2;
    		GBFSTest<psize, pdbsize>(stoi(argv[2]), gh2);
 	}
-	else
+	else if (stoi(argv[1]) == 0)
 	{
 		GroupHeuristic<TOHState<psize>> gh;
     	PlanningTest<psize, pdbsize>(stoi(argv[2]), 10, (kAnchorSelection)stoi(argv[3]), stoi(argv[4]), gh);
+	}
+	else 
+	{
+		GroupHeuristic<TOHState<psize>> gh;
+    	PlanningTest3<psize, pdbsize>(stoi(argv[2]), stoi(argv[4]), gh);
 	}
 	
 	

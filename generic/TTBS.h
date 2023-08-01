@@ -34,11 +34,19 @@ public:
 template<class Data>
 struct TTBSCompare {
 public:
+	int lifo;
+	TTBSCompare(int _lifo)
+	{
+		lifo = _lifo;
+	}
     bool operator()(const Data& a, const Data& b) {
         if (a.h == b.h)
         {
             if (a.reprioritized == b.reprioritized)
-                return a.iter < b.iter;
+				if (lifo == 1)		//lifo
+					return a.iter < b.iter;
+				else if (lifo == 0) //fifo
+                	return a.iter > b.iter;
             return b.reprioritized;
         }
         return a.h > b.h;
@@ -64,7 +72,7 @@ public:
 	TTBSFrontier(Env *_env, State _start, Heuristic<State> *h);
 	~TTBSFrontier(){}
 	bool DoSingleSearchStep();
-    void InitializeSearch();
+    void InitializeSearch(int lifo);
 	void GetPath(std::vector<State> &path);
 	std::vector<State> GetPath(State node, bool forward);
 	void ExtractPath(std::vector<State> &path);
@@ -111,9 +119,9 @@ void TTBSFrontier<Env, State>::ExtractPath(std::vector<State> &path)
 
 
 template <class Env,  class State>
-void TTBSFrontier<Env, State>::InitializeSearch()
+void TTBSFrontier<Env, State>::InitializeSearch(int lifo)
 {
-    open = new std::priority_queue<TTBSData<State>, std::vector<TTBSData<State>>, TTBSCompare<TTBSData<State>>>();
+    open = new std::priority_queue<TTBSData<State>, std::vector<TTBSData<State>>, TTBSCompare<TTBSData<State>>>(TTBSCompare<TTBSData<State>>(lifo));
     open->push(TTBSData<State>(start, other->start, HCost(start, other->start), 0, false));
 }
 
@@ -214,10 +222,11 @@ class TTBS
 public:
 	double pathRatio;
     int turn = 0;
+	int lifo;
 	TTBSFrontier<Env, State>* ff;
 	TTBSFrontier<Env, State>* bf;
 	TTBS();
-	TTBS(Env *_env, State _start, State _goal, Heuristic<State> *hf, Heuristic<State> *hb);
+	TTBS(Env *_env, State _start, State _goal, Heuristic<State> *hf, Heuristic<State> *hb, int lifo = 0);
 	~TTBS(){}
 	void Init(Env *_env, State _start, State _goal, Heuristic<State> *hf, Heuristic<State> *hb)
 	{
@@ -304,14 +313,15 @@ public:
 
 
 template <class Env, class State>
-TTBS<Env, State>::TTBS(Env *_env, State _start, State _goal, Heuristic<State> *hf, Heuristic<State> *hb)
+TTBS<Env, State>::TTBS(Env *_env, State _start, State _goal, Heuristic<State> *hf, Heuristic<State> *hb, int _lifo)
 {
+	lifo = _lifo;
 	ff = new TTBSFrontier<Env, State>(_env, _start, hf);
 	bf = new TTBSFrontier<Env, State>(_env, _goal, hb);
 	ff->other = bf;
 	bf->other = ff;
-    ff->InitializeSearch();
-    bf->InitializeSearch();
+    ff->InitializeSearch(lifo);
+    bf->InitializeSearch(lifo);
 }
 
 

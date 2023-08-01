@@ -12,9 +12,26 @@
 
 
 template<class State>
-struct DNodeCompare {
+class DNRData
+{
 public:
-    DNodeCompare<State>(Heuristic<State> *_h, State _dnode)
+    State state;
+	double g;
+	uint64_t hash;
+    DNRData(State _state, double _g, uint64_t _hash)
+    {
+        state = _state;
+		g = _g;
+		hash = _hash;
+    }
+};
+
+
+
+template<class State>
+struct _DNodeCompare {
+public:
+    _DNodeCompare<State>(Heuristic<State> *_h, State _dnode)
     {
         dnode = _dnode;
         h = _h;
@@ -26,13 +43,36 @@ public:
     }
 };
 
+
+template<class Data, class State>
+struct DNodeCompare {
+public:
+    DNodeCompare<Data, State>(Heuristic<State> *_h, State _dnode)
+    {
+        dnode = _dnode;
+        h = _h;
+    }
+    State dnode;
+    Heuristic<State> *h;
+    bool operator()(const Data& lhs, const Data& rhs) {
+		auto h1 = h->HCost(lhs.state, dnode);
+		auto h2 = h->HCost(rhs.state, dnode);
+		if (h1 == h2)
+			return lhs.g < rhs.g;
+        return h1 > h2;
+    }
+};
+
+
+
+
 template <class Env, class State>
 class DNodeFrontier
 {
 public:
     Env *env;
 	std::vector<State> children;
-	std::priority_queue<State, std::vector<State>, DNodeCompare<State>> *open;
+	std::priority_queue<DNRData<State>, std::vector<DNRData<State>>, DNodeCompare<DNRData<State>, State>> *open;
 	std::set<uint64_t> closed;
 	std::map<uint64_t, double> gValues;
 	std::map<uint64_t, State> parents;
@@ -96,13 +136,13 @@ void DNodeFrontier<Env, State>::ExtractPath(std::vector<State> &path)
 template <class Env,  class State>
 void DNodeFrontier<Env, State>::Retarget()
 {
-    std::vector<State> tmp;
+    std::vector<DNRData<State>> tmp;
     while (!open->empty())
     {
         tmp.push_back(open->top());
         open->pop();
     }
-    open = new std::priority_queue<State, std::vector<State>, DNodeCompare<State>>(DNodeCompare<State>(h, other->anchor));
+    open = new std::priority_queue<DNRData<State>, std::vector<DNRData<State>>, DNodeCompare<DNRData<State>, State>>(DNodeCompare<DNRData<State>, State>(h, other->anchor));
     for (auto s : tmp)
     {
         open->push(s);
@@ -112,8 +152,8 @@ void DNodeFrontier<Env, State>::Retarget()
 template <class Env,  class State>
 void DNodeFrontier<Env, State>::InitializeSearch()
 {
-    open = new std::priority_queue<State, std::vector<State>, DNodeCompare<State>>(DNodeCompare<State>(h, other->anchor));
-    open->push(start);
+    open = new std::priority_queue<DNRData<State>, std::vector<DNRData<State>>, DNodeCompare<DNRData<State>, State>>(DNodeCompare<DNRData<State>, State>(h, other->anchor));
+    open->push(DNRData<State>(start, 0, env->GetStateHash(start)));
 }
 
 template <class Env,  class State>
@@ -125,9 +165,10 @@ bool DNodeFrontier<Env, State>::DoSingleSearchStep()
 		return true;
 	}
 
-	State bestCandidate = open->top();
+	auto data = open->top();
+	State bestCandidate = data.state;
     open->pop();
-    auto bestCandidateHash = env->GetStateHash(bestCandidate);
+    auto bestCandidateHash = data.hash;
 	closed.insert(bestCandidateHash);
 	numOfExp++;
 	children.resize(0);
@@ -136,6 +177,12 @@ bool DNodeFrontier<Env, State>::DoSingleSearchStep()
 	{
 		auto nhash = env->GetStateHash(neighbor);
 		double g = gValues[bestCandidateHash] + env->GCost(bestCandidate, neighbor);
+		if (other->gValues.find(nhash) != other->gValues.end())// || bestCandidate == other->start)
+		{
+			rendezvous = bestCandidate;
+			other->rendezvous = neighbor;
+			return true;
+		}
 		if (gValues.find(nhash) != gValues.end())
 		{
 			if (g < gValues[nhash])
@@ -152,7 +199,7 @@ bool DNodeFrontier<Env, State>::DoSingleSearchStep()
 		else
 		{
 			gValues[nhash] = g;
-			open->push(neighbor);
+			open->push(DNRData<State>(neighbor, g, nhash));
 			parents[nhash] = bestCandidate;
             if (g > anchorG)
             {
@@ -163,12 +210,12 @@ bool DNodeFrontier<Env, State>::DoSingleSearchStep()
 	}
     //std::cout << "new size: " << open->size() << std::endl;
 	//anchor = bestCandidate;
-	if (other->gValues.find(bestCandidateHash) != other->gValues.end())// || bestCandidate == other->start)
-	{
-		rendezvous = bestCandidate;
-		other->rendezvous = rendezvous;
-		return true;
-	}
+	//if (other->gValues.find(bestCandidateHash) != other->gValues.end())// || bestCandidate == other->start)
+	//{
+	//	rendezvous = bestCandidate;
+	//	other->rendezvous = rendezvous;
+	//	return true;
+	//}
 	return false;
 }
 
@@ -254,7 +301,7 @@ public:
 		}
 		front.push_back(ff->start);
 		path.resize(0);
-		for (int i = front.size() - 1; i >= 1; i--)
+		for (int i = front.size() - 1; i >= 0; i--)
 			path.push_back(front[i]);
 		for (int i = 0; i < back.size(); i++)
 			path.push_back(back[i]);

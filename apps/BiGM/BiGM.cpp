@@ -19,6 +19,7 @@
 #include "DNode.h"
 #include "TTBS.h"
 #include "TASS4.h"
+#include "FastTAS.h"
 
 
 using namespace std;
@@ -134,7 +135,7 @@ void Test(const char* mapsDir, const char* path)
 vector<string> GetScenarios(string mapname)
 {
 	vector<string> res;
-	string basePath = "/home/sepehr3/projects/def-nathanst-ab/sepehr3/hog2/hog2/scenarios/" + mapname;
+	string basePath = "/home/sepehr3/projects/def-nathanst-ab/sepehr3/hog2_AS/scenarios/" + mapname;
 	DIR *dr;
    	struct dirent *en;
    	dr = opendir(basePath.c_str()); //open all directory
@@ -1059,8 +1060,8 @@ void QuickTest(string scenarioPath, int anchorSelection)
         goal.y = exp.GetGoalY();
 	    cout << start << " " << goal << " " << exp.GetXScale() << " " << exp.GetYScale() << endl; 
 	    TTBS<MapEnvironment, xyLoc> ttbs(env, start, goal, env, env);
-        TASS<MapEnvironment, xyLoc> tas(env, start, goal, env, env, 10);
-		TemplateAStar<xyLoc, tDirection, MapEnvironment> astar;
+        FastTAS<MapEnvironment, xyLoc> tas(env, start, goal, env, env, 10);
+		TemplateAStar<xyLoc, tDirection, MapEnvironment, IndexOpenClosed<xyLoc>> astar;
 		astar.SetPhi(phi);
 		//TASS<MapEnvironment, xyLoc> tas(env, start, goal, env, env, 10);
 		tas.SetAnchorSelection((kAnchorSelection)anchorSelection);
@@ -1099,6 +1100,134 @@ void QuickTest(string scenarioPath, int anchorSelection)
 	delete sl;
 }
 
+
+void QuickTest2(string mapName, int scenarioIndex, int problemIndex, int problemCount, string outputdir, string alg)
+{
+	vector<string> scenarios = GetScenarios(mapName);
+	const char* mapsDir = "/home/sepehr3/projects/def-nathanst-ab/sepehr3/hog2_AS";
+    ScenarioLoader *sl = new ScenarioLoader(scenarios[scenarioIndex].c_str());
+	Experiment last = sl->GetNthExperiment(sl->GetNumExperiments() - 1);
+	char *_s = new char[strlen(mapsDir)+strlen(last.GetMapName())+1];
+	strcpy(_s,mapsDir);
+	strcat(_s,"/");
+	strcat(_s,last.GetMapName());
+	cout << _s << endl;
+	Map *map = new Map(_s);
+	MapEnvironment *env = new MapEnvironment(map);
+	ofstream myfile;
+	string mn = last.GetMapName();
+	replace(mn.begin(), mn.end(), '/', '_');
+  	string s = "/home/sepehr3/projects/def-nathanst-ab/sepehr3/GMResults/" + outputdir + "/" + mn + ".txt";
+  	myfile.open (s);
+
+    double avg,t;
+	avg = 0;
+	t = 0;
+    int count = 0;
+
+    for (int i = problemIndex; i < min(sl->GetNumExperiments(), problemIndex + problemCount); i++)
+    {
+	    myfile << "---------- " << last.GetMapName() << " ---------- problem #" << i << endl;
+	    Experiment exp = sl->GetNthExperiment(i);
+        xyLoc start, goal;
+	    start.x = exp.GetStartX();
+        start.y = exp.GetStartY();
+	    goal.x = exp.GetGoalX();
+        goal.y = exp.GetGoalY();
+	    myfile << start << " " << goal << " " << exp.GetXScale() << " " << exp.GetYScale() << endl; 
+
+		std::vector<xyLoc> thePath;
+		thePath.clear();
+		Timer timer;
+		if (alg == "tas-t")
+		{
+			FastTAS<MapEnvironment, xyLoc> tas(env, start, goal, env, env, 10);
+			tas.SetAnchorSelection(Temporal);
+			timer.StartTimer();
+			tas.GetPath(thePath);
+			timer.EndTimer();
+			myfile << "TAS-T: " << tas.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << env->GetPathLength(thePath) << " " << tas.pathRatio << endl;
+			avg += tas.GetNodesExpanded();
+			t += timer.GetElapsedTime();
+			delete tas.ff;
+			delete tas.bf;
+		}
+		else if (alg == "tas-a")
+		{
+			FastTAS<MapEnvironment, xyLoc> tas(env, start, goal, env, env, 10);
+			tas.SetAnchorSelection(Anchor);
+			timer.StartTimer();
+			tas.GetPath(thePath);
+			timer.EndTimer();
+			myfile << "TAS-A: " << tas.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << env->GetPathLength(thePath) << " " << tas.pathRatio << endl;
+			avg += tas.GetNodesExpanded();
+			t += timer.GetElapsedTime();
+			delete tas.ff;
+			delete tas.bf;
+		}
+		else if (alg == "tas-af")
+		{
+			FastTAS<MapEnvironment, xyLoc> tas(env, start, goal, env, env, 10);
+			tas.SetAnchorSelection(Anchor, Fixed);
+			timer.StartTimer();
+			tas.GetPath(thePath);
+			timer.EndTimer();
+			myfile << "TAS-AF: " << tas.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << env->GetPathLength(thePath) << " " << tas.pathRatio << endl;
+			avg += tas.GetNodesExpanded();
+			t += timer.GetElapsedTime();
+			delete tas.ff;
+			delete tas.bf;
+		}
+		else if (alg == "gbfs")
+		{
+			TemplateAStar<xyLoc, tDirection, MapEnvironment, IndexOpenClosed<xyLoc>> astar;
+			astar.SetPhi(phi);
+			timer.StartTimer();
+			astar.GetPath(env, start, goal, thePath);
+			timer.EndTimer();
+			avg += astar.GetNodesExpanded();
+			t += timer.GetElapsedTime();
+			myfile << "GBFS: " << astar.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << env->GetPathLength(thePath) << endl;
+		}
+		else if (alg == "ttbs-lifo")
+		{
+			TTBS<MapEnvironment, xyLoc> ttbs(env, start, goal, env, env, 1);
+			timer.StartTimer();
+        	ttbs.GetPath(thePath);
+	    	timer.EndTimer();
+			avg += ttbs.GetNodesExpanded();
+			t += timer.GetElapsedTime();
+			myfile << "TTBS: " << ttbs.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << env->GetPathLength(thePath) << " " << ttbs.pathRatio << endl;
+		}
+		else if (alg == "ttbs-fifo")
+		{
+			TTBS<MapEnvironment, xyLoc> ttbs(env, start, goal, env, env, 0);
+			timer.StartTimer();
+        	ttbs.GetPath(thePath);
+	    	timer.EndTimer();
+			avg += ttbs.GetNodesExpanded();
+			t += timer.GetElapsedTime();
+			myfile << "TTBS: " << ttbs.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << env->GetPathLength(thePath) << " " << ttbs.pathRatio << endl;
+		}
+		else if (alg == "dnr")
+		{
+			DNode<MapEnvironment, xyLoc> dnode(env, start, goal, env, env, 100);
+			timer.StartTimer();
+        	dnode.GetPath(thePath);
+	    	timer.EndTimer();
+			avg += dnode.GetNodesExpanded();
+			t += timer.GetElapsedTime();
+			myfile << "DNR: " << dnode.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << env->GetPathLength(thePath) << " " << dnode.pathRatio << endl;
+		}
+		count++;
+    }
+	myfile << "***************************************" << endl;
+	myfile << avg/(double)count << " " << t/(double)count << endl;
+	myfile.close();
+	delete map;
+	delete env;
+	delete sl;
+}
 
 void TASATest(string mapName, int scenarioIndex, int problemIndex, int problemCount)
 {
@@ -1203,7 +1332,10 @@ int main(int argc, char *argv[])
 	//TASATest(argv[1], stoi(argv[2]), 0, 100000);
 	//ExstensiveTest(argv[1], stoi(argv[2]), 0, 100000, argv[3]);
     //DNodeTest(argv[1], stoi(argv[2]));
-    QuickTest(argv[1], stoi(argv[2]));
+
+
+    //QuickTest2(argv[1], argv[2]);
+	QuickTest2(argv[1], stoi(argv[2]), stoi(argv[3]), stoi(argv[4]), argv[5], argv[6]);
 	//DrawTest(argv[1], stoi(argv[2]), stoi(argv[3]));
 
 	//Timer t;
