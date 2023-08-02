@@ -70,7 +70,9 @@ public:
 	State start;
     Heuristic<State> *h;
 	TTBSFrontier(Env *_env, State _start, Heuristic<State> *h);
-	~TTBSFrontier(){}
+	~TTBSFrontier(){
+		delete open;
+	}
 	bool DoSingleSearchStep();
     void InitializeSearch(int lifo);
 	void GetPath(std::vector<State> &path);

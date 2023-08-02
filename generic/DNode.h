@@ -84,7 +84,9 @@ public:
 	State start;
     Heuristic<State> *h;
 	DNodeFrontier(Env *_env, State _start, Heuristic<State> *h);
-	~DNodeFrontier(){}
+	~DNodeFrontier(){
+		delete open;
+	}
 	bool DoSingleSearchStep();
     void InitializeSearch();
 	void GetPath(std::vector<State> &path);

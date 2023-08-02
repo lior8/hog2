@@ -888,7 +888,6 @@ void ExstensiveTest(string mapName, int scenarioIndex, int problemIndex, int pro
 		t4.StartTimer();
     	dnode100.GetPath(thePath4);
     	t4.EndTimer();
-
     	//t1.StartTimer();
     	//astar.GetPath(env, start, goal, aPath);
     	//t1.EndTimer();
@@ -1198,6 +1197,7 @@ void QuickTest2(string mapName, int scenarioIndex, int problemIndex, int problem
 			avg += ttbs.GetNodesExpanded();
 			t += timer.GetElapsedTime();
 			myfile << "TTBS: " << ttbs.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << env->GetPathLength(thePath) << " " << ttbs.pathRatio << endl;
+			ttbs.Clear();
 		}
 		else if (alg == "ttbs-fifo")
 		{
@@ -1208,6 +1208,7 @@ void QuickTest2(string mapName, int scenarioIndex, int problemIndex, int problem
 			avg += ttbs.GetNodesExpanded();
 			t += timer.GetElapsedTime();
 			myfile << "TTBS: " << ttbs.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << env->GetPathLength(thePath) << " " << ttbs.pathRatio << endl;
+			ttbs.Clear();
 		}
 		else if (alg == "dnr")
 		{
@@ -1218,6 +1219,7 @@ void QuickTest2(string mapName, int scenarioIndex, int problemIndex, int problem
 			avg += dnode.GetNodesExpanded();
 			t += timer.GetElapsedTime();
 			myfile << "DNR: " << dnode.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << env->GetPathLength(thePath) << " " << dnode.pathRatio << endl;
+			dnode.Clear();
 		}
 		count++;
     }
