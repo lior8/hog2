@@ -302,8 +302,13 @@ public:
 		if (!ff->validSolution || !bf->validSolution)
 			return;
 		ExtractPath(path);
-		delete ff->open;
-		delete bf->open;
+		//delete ff->open;
+		//delete bf->open;
+	}
+	void Clear()
+	{
+		delete ff;
+		delete bf;
 	}
 	void SetSeed(unsigned int seed)
 	{
