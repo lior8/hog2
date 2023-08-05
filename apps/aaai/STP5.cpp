@@ -883,7 +883,7 @@ int main(int argc, char* argv[])
 	*/
 
 	
-    const int psize = 14;
+    const int psize = 20;
 	const int pdbsize = 10;
 
 	//GroupHeuristic<TOHState<psize>> gh3;

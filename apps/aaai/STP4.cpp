@@ -232,7 +232,7 @@ void STPTest(int problemIndex, double &avg1, double &avg2)
 }
 
 
-void STPTest2(int problemIndex, double &avg1, double &avg2, double &avg3, double &avg4, string alg, int variant, int parameter)
+void STPTest2(int problemIndex, double &avg1, double &avg2, double &avg3, double &avg4, string alg)
 {
     //srandom(problemSeed);
 	//TemplateAStar<MNPuzzleState<5, 5>, slideDir, MNPuzzle<5,5>> astar;
@@ -241,81 +241,109 @@ void STPTest2(int problemIndex, double &avg1, double &avg2, double &avg3, double
     vector<MNPuzzleState<4, 4>> path1, path2, path3;
     start = STP::GetKorfInstance(problemIndex);
     goal = STP::GetKorfInstance((problemIndex + 10) % 100);
-    //cout << mnp.HCost(start, goal) << endl;
-    //cout << start << endl;
-    //cout << goal << endl;
 
-    TemplateAStar<MNPuzzleState<4, 4>, slideDir, MNPuzzle<4, 4>> astar;
-    astar.SetPhi(Phi);
-    TASS<MNPuzzle<4, 4>, MNPuzzleState<4, 4>> tasa(&mnp, start, goal, &mnp, &mnp, parameter);
-	tasa.SetAnchorSelection((kAnchorSelection)variant);
-	RASS<MNPuzzle<4, 4>, MNPuzzleState<4, 4>> ras(&mnp, start, goal, &mnp, &mnp, parameter);
-	ras.SetAnchorSelection((kAnchorSelection)variant);
-	TTBS<MNPuzzle<4, 4>, MNPuzzleState<4, 4>> ttbs(&mnp, start, goal, &mnp, &mnp);
-	DNode<MNPuzzle<4, 4>, MNPuzzleState<4, 4>> dnode(&mnp, start, goal, &mnp, &mnp, parameter);
     Timer timer1, timer2, timer3;
 
 
-	if (alg == "tas")
+	if (alg == "tas-t")
 	{
+		TASS<MNPuzzle<4, 4>, MNPuzzleState<4, 4>> tasa(&mnp, start, goal, &mnp, &mnp, 10);
+		tasa.SetAnchorSelection(Temporal);
 		timer1.StartTimer();
     	tasa.GetPath(path1);
     	timer1.EndTimer();
 		avg1 += tasa.GetNodesExpanded();
 		avg2 += timer1.GetElapsedTime();
 		avg3 += path1.size();
-		avg4 += min(tasa.pathRatio, 1.0 - tasa.pathRatio);
-		cout << tasa.GetNodesExpanded() << " " << timer1.GetElapsedTime() << " " << path1.size() << endl;
+		avg4 += tasa.pathRatio;
+		cout << "TAS-T: " << tasa.GetNodesExpanded() << " " << timer1.GetElapsedTime() << " " << path1.size() << endl;
+		delete tasa.ff;
+		delete tasa.bf;
 	}
-	else if (alg =="ras")
+	else if (alg =="tas-a")
 	{
+		TASS<MNPuzzle<4, 4>, MNPuzzleState<4, 4>> tasa(&mnp, start, goal, &mnp, &mnp, 10);
+		tasa.SetAnchorSelection(Anchor);
 		timer1.StartTimer();
-    	ras.GetPath(path1);
+    	tasa.GetPath(path1);
     	timer1.EndTimer();
-		avg1 += ras.GetNodesExpanded();
+		avg1 += tasa.GetNodesExpanded();
 		avg2 += timer1.GetElapsedTime();
 		avg3 += path1.size();
-		avg4 += min(ras.pathRatio, 1.0 - ras.pathRatio);
-		cout << ras.GetNodesExpanded() << " " << timer1.GetElapsedTime() << " " << path1.size() << endl;
+		avg4 += tasa.pathRatio;
+		cout << "TAS-A: " << tasa.GetNodesExpanded() << " " << timer1.GetElapsedTime() << " " << path1.size() << endl;
+		delete tasa.ff;
+		delete tasa.bf;
 	}
-	else if (alg == "ttbs")
+	else if (alg =="tas-af")
 	{
+		TASS<MNPuzzle<4, 4>, MNPuzzleState<4, 4>> tasa(&mnp, start, goal, &mnp, &mnp, 10);
+		tasa.SetAnchorSelection(Anchor, Fixed);
+		timer1.StartTimer();
+    	tasa.GetPath(path1);
+    	timer1.EndTimer();
+		avg1 += tasa.GetNodesExpanded();
+		avg2 += timer1.GetElapsedTime();
+		avg3 += path1.size();
+		avg4 += tasa.pathRatio;
+		cout << "TAS-AF: " << tasa.GetNodesExpanded() << " " << timer1.GetElapsedTime() << " " << path1.size() << endl;
+		delete tasa.ff;
+		delete tasa.bf;
+	}
+	else if (alg == "ttbs-lifo")
+	{
+		TTBS<MNPuzzle<4, 4>, MNPuzzleState<4, 4>> ttbs(&mnp, start, goal, &mnp, &mnp, 1);
 		timer1.StartTimer();
     	ttbs.GetPath(path1);
     	timer1.EndTimer();
 		avg1 += ttbs.GetNodesExpanded();
 		avg2 += timer1.GetElapsedTime();
 		avg3 += path1.size();
-		avg4 += min(ttbs.pathRatio, 1.0 - ttbs.pathRatio);
-		cout << ttbs.GetNodesExpanded() << " " << timer1.GetElapsedTime() << " " << path1.size() << endl;
+		avg4 += ttbs.pathRatio;
+		cout << "TTBS-LIFO: " << ttbs.GetNodesExpanded() << " " << timer1.GetElapsedTime() << " " << path1.size() << endl;
 	}
-	else if (alg == "dnode")
+	else if (alg == "ttbs-fifo")
 	{
+		TTBS<MNPuzzle<4, 4>, MNPuzzleState<4, 4>> ttbs(&mnp, start, goal, &mnp, &mnp, 0);
+		timer1.StartTimer();
+    	ttbs.GetPath(path1);
+    	timer1.EndTimer();
+		avg1 += ttbs.GetNodesExpanded();
+		avg2 += timer1.GetElapsedTime();
+		avg3 += path1.size();
+		avg4 += ttbs.pathRatio;
+		cout << "TTBS-FIFO: " << ttbs.GetNodesExpanded() << " " << timer1.GetElapsedTime() << " " << path1.size() << endl;
+	}
+	else if (alg == "dnr")
+	{
+		DNode<MNPuzzle<4, 4>, MNPuzzleState<4, 4>> dnode(&mnp, start, goal, &mnp, &mnp, 100);
 		timer1.StartTimer();
     	dnode.GetPath(path1);
     	timer1.EndTimer();
 		avg1 += dnode.GetNodesExpanded();
 		avg2 += timer1.GetElapsedTime();
 		avg3 += path1.size();
-		avg4 += min(dnode.pathRatio, 1.0 - dnode.pathRatio);
-		cout << dnode.GetNodesExpanded() << " " << timer1.GetElapsedTime() << " " << path1.size() << endl;
+		avg4 += dnode.pathRatio;
+		cout << "DNR: " << dnode.GetNodesExpanded() << " " << timer1.GetElapsedTime() << " " << path1.size() << endl;
 	}
 	else if (alg == "gbfs")
 	{
+		TemplateAStar<MNPuzzleState<4, 4>, slideDir, MNPuzzle<4, 4>> astar;
+    	astar.SetPhi(Phi);
 		timer1.StartTimer();
     	astar.GetPath(&mnp, start, goal, path1);
     	timer1.EndTimer();
 		avg1 += astar.GetNodesExpanded();
 		avg2 += timer1.GetElapsedTime();
 		avg3 += path1.size();
-		cout << astar.GetNodesExpanded() << " " << timer1.GetElapsedTime() << " " << path1.size() << endl;
+		cout << "GBFS: " << astar.GetNodesExpanded() << " " << timer1.GetElapsedTime() << " " << path1.size() << endl;
 	}
 }
 
 
 
 
-void STPPDBTest(int problemIndex, int episode)
+void STPPDBTest(int problemIndex, double &avg1, double &avg2, double &avg3, double &avg4, int episode)
 {
     //srandom(problemSeed);
 	//TemplateAStar<MNPuzzleState<5, 5>, slideDir, MNPuzzle<5,5>> astar;
@@ -349,11 +377,16 @@ void STPPDBTest(int problemIndex, int episode)
 	timer1.StartTimer();
     tas.GetPath(path1);
     timer1.EndTimer();
-	cout << tas.GetNodesExpanded() << " " << timer1.GetElapsedTime() << " " << path1.size() << endl;
-	timer2.StartTimer();
-    astar.GetPath(mnp, start, goal, path2);
-    timer2.EndTimer();
-	cout << astar.GetNodesExpanded() << " " << timer2.GetElapsedTime() << " " << path2.size() << endl;
+	cout << problemIndex << ": " << tas.GetNodesExpanded() << " " << timer1.GetElapsedTime() << " " << path1.size() << endl;
+	
+	//timer2.StartTimer();
+    //astar.GetPath(mnp, start, goal, path2);
+    //timer2.EndTimer();
+	//cout << astar.GetNodesExpanded() << " " << timer2.GetElapsedTime() << " " << path2.size() << endl;
+	avg1 += tas.GetNodesExpanded();
+	avg2 += timer1.GetElapsedTime();
+	avg3 += path1.size();
+	avg4 += tas.pathRatio;
 }
 
 
@@ -367,13 +400,17 @@ int main(int argc, char* argv[])
 	double avg4 = 0;
 	//STPTest(stoi(argv[1]), avg1, avg2);
 	
+	
 	for (int i = 0; i < 100; i++)
 	{
-		STPTest2(i, avg1, avg2, avg3, avg4, argv[1], stoi(argv[2]), stoi(argv[3]));
+		STPTest2(i, avg1, avg2, avg3, avg4, argv[1]);
 	}
 	std::cout << avg1 / 100.0 << " " << avg2 / 100.0 << " " << avg3 / 100.0 << " " << avg4 / 100.0 << std::endl;
 	
-
-	//STPPDBTest(stoi(argv[1]), stoi(argv[2]));
+	//for (int i = 0; i < 100; i++)
+	//{
+	//	STPPDBTest(i, avg1, avg2, avg3, avg4, stoi(argv[1]));
+	//}
+	//std::cout << avg1 / 100.0 << " " << avg2 / 100.0 << " " << avg3 / 100.0 << " " << avg4 / 100.0 << std::endl;
 	return 0;
 }

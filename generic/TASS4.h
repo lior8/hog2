@@ -257,31 +257,7 @@ bool TASSFrontier<Env, State>::DoSingleSearchStep()
 					//std::cout << numOfExp << ": " << HCost(anchor, other->anchor) << " " << HCost(anchor, start) << " " << HCost(other->anchor, start) << " " << HCost(anchor, other->start) << " " << HCost(other->anchor, other->start) << std::endl;
                 }
             }
-			
 
-			/*
-			if (HCost(bestCandidate, other->anchor) < HCost(anchor, other->anchor))
-			{
-				anchor = bestCandidate;
-				std::cout << HCost(anchor, other->anchor) << " " << HCost(anchor, start) << " " << HCost(other->anchor, start) << " " << HCost(anchor, other->start) << " " << HCost(other->anchor, other->start) << std::endl;
-			}
-			else if (HCost(bestCandidate, other->anchor) == HCost(anchor, other->anchor))
-			{
-				if (HCost(bestCandidate, start) + HCost(bestCandidate, other->start) < HCost(anchor, start) + HCost(anchor, other->start))
-				{
-					anchor = bestCandidate;
-					std::cout << HCost(anchor, other->anchor) << " " << HCost(anchor, start) << " " << HCost(other->anchor, start) << " " << HCost(anchor, other->start) << " " << HCost(other->anchor, other->start) << std::endl;
-				}
-			}
-			*/
-			
-			//if (numOfExp % 10000 == 0)
-			//{
-			//	anchor = bestCandidate;
-			//	std::cout << HCost(anchor, other->anchor) << " " << HCost(anchor, start) << " " << HCost(other->anchor, start) << " " << HCost(anchor, other->start) << " " << HCost(other->anchor, other->start) << std::endl;
-			//}
-				
-            
 			break;
 		}
         case Random:

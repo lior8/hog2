@@ -94,6 +94,7 @@ public:
     void Retarget();
 	void ExtractPath(std::vector<State> &path);
 	bool validSolution;
+	bool dnodeChanged = false;
 
 	double HCost(State s1, State s2)
 	{
@@ -138,6 +139,8 @@ void DNodeFrontier<Env, State>::ExtractPath(std::vector<State> &path)
 template <class Env,  class State>
 void DNodeFrontier<Env, State>::Retarget()
 {
+	if (!other->dnodeChanged)
+		return;
     std::vector<DNRData<State>> tmp;
     while (!open->empty())
     {
@@ -149,6 +152,7 @@ void DNodeFrontier<Env, State>::Retarget()
     {
         open->push(s);
     }
+	other->dnodeChanged = false;
 }
 
 template <class Env,  class State>
@@ -195,6 +199,7 @@ bool DNodeFrontier<Env, State>::DoSingleSearchStep()
                 {
                     anchor = neighbor;
                     anchorG = g;
+					dnodeChanged = true;
                 }
 			}
 		}
@@ -207,6 +212,7 @@ bool DNodeFrontier<Env, State>::DoSingleSearchStep()
             {
                 anchor = neighbor;
                 anchorG = g;
+				dnodeChanged = true;
             }
 		}
 	}
