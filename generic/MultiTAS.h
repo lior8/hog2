@@ -13,7 +13,7 @@
 
 
 template<class State>
-struct RASSOpenClosedData
+struct OpenClosedDataM
 {
 public:
 
@@ -23,7 +23,7 @@ public:
 };
 
 template <class Env, class State>
-class RASSFrontier
+class MultiTASFrontier
 {
 public:
     Env *env;
@@ -34,21 +34,18 @@ public:
 	std::vector<State> children;
 	std::vector<std::pair<State, uint64_t>> open;
 	std::set<uint64_t> closed;
-	//std::unordered_map<uint64_t, double> gValues;
-	//std::unordered_map<uint64_t, State> parents;
-	//std::unordered_map<uint64_t, int> loc;
-    std::unordered_map<uint64_t, RASSOpenClosedData<State>> openClosed;
+    std::unordered_map<uint64_t, OpenClosedDataM<State>> openClosed;
 	std::vector<int> occurrences;
 	std::vector<int> _occurrences;
 	int numOfExp = 0;
 	State rendezvous;
-	RASSFrontier *other;
+	MultiTASFrontier *other;
     int sampleCount;
 	State anchor;
 	State start;
     Heuristic<State> *h;
-	RASSFrontier(Env *_env, State _start, Heuristic<State> *h, int _sampleCount);
-	~RASSFrontier(){}
+	MultiTASFrontier(Env *_env, State _start, Heuristic<State> *h, int _sampleCount);
+	~MultiTASFrontier(){}
 	bool DoSingleSearchStep();
 	void GetPath(std::vector<State> &path);
 	void SetSeed(unsigned int seed);
@@ -57,6 +54,7 @@ public:
 	bool validSolution;
     double anchorH = -1;
 	double anchorG = 0;
+	int anchorUpdateCounter;
 
     kAnchorSelection anchorSelection;
 
@@ -91,7 +89,7 @@ public:
 
 
 template <class Env,  class State>
-RASSFrontier<Env, State>::RASSFrontier(Env *_env, State _start, Heuristic<State> *_h, int _sampleCount)
+MultiTASFrontier<Env, State>::MultiTASFrontier(Env *_env, State _start, Heuristic<State> *_h, int _sampleCount)
 {
     sampleCount = _sampleCount;
 	env = _env;
@@ -101,34 +99,22 @@ RASSFrontier<Env, State>::RASSFrontier(Env *_env, State _start, Heuristic<State>
 	start = _start;
     openClosed.clear();
     openClosed.reserve(100000);
-    //openClosed.max_load_factor(3.0);
-    //openClosed.max_load_factor(0.5);
-    //gValues.reserve(1000000);
-    //loc.reserve(1000000);
-    //parents.reserve(1000000);
-    //gValues.max_load_factor(3.0);
-    //loc.max_load_factor(3.0);
-    //parents.max_load_factor(3.0);
     auto shash = env->GetStateHash(start);
 	open.push_back(std::make_pair(start, shash));
-	//gValues[env->GetStateHash(start)] = 0;
-	//loc.clear();
-	//loc[env->GetStateHash(start)] = 0;
-	//loc.insert({env->GetStateHash(start), 0});
-    RASSOpenClosedData<State> data;
+    OpenClosedDataM<State> data;
     data.g = 0;
     data.loc = 0;
     data.parent = start;
-    //openClosed[env->GetStateHash(start)] = data;
     openClosed.insert({shash, data});
 	anchor = start;
 	numOfExp = 0;
 	validSolution = true;
+	anchorUpdateCounter = 100;
 }
 
 
 template <class Env,  class State>
-void RASSFrontier<Env, State>::ExtractPath(std::vector<State> &path)
+void MultiTASFrontier<Env, State>::ExtractPath(std::vector<State> &path)
 {
 	auto current = rendezvous;
 	while (true)
@@ -146,7 +132,7 @@ void RASSFrontier<Env, State>::ExtractPath(std::vector<State> &path)
 
 
 template <class Env,  class State>
-bool RASSFrontier<Env, State>::DoSingleSearchStep()
+bool MultiTASFrontier<Env, State>::DoSingleSearchStep()
 {
 	if (open.size() == 0)
 	{
@@ -154,38 +140,34 @@ bool RASSFrontier<Env, State>::DoSingleSearchStep()
 		validSolution = false;
 		return true;
 	}
-		
+	std::vector<int> anchors;
+    for (int i = 0; i < min(sampleCount, other->open.size()); i++)
+    {
+        anchors.push_back(rand_r(&seed) % other->open.size());
+    }
 	double minDist = 99999999;
     auto back = open.back();
 	State bestCandidate = back.first;
 	uint64_t bestCandidateHash = back.second;
-	int _samples = min(sampleCount - 1, open.size());
+	int _samples = sampleCount;
 	int index = open.size() - 1;
-    while (_samples > 0)
+    while (index >= 0 && _samples > 0)
     {
-        int index = rand() % open.size();
         auto pair = open[index];
         State c = pair.first;
         auto hash = pair.second;
-		auto dist = HCost(c, other->anchor);
+		auto dist = 9999999999;
+        for (int i = 0; i < anchors.size(); i++)
+            dist = min(HCost(c, other->open[anchors[i]].first), dist);
 		if (dist < minDist || dist == minDist && openClosed[hash].g > openClosed[bestCandidateHash].g)
 		{
 			minDist = dist;
 			bestCandidate = c;
 			bestCandidateHash = hash;
 		}
+        index--;
 		_samples--;
     }
-    auto pair = open.back();
-    State c = pair.first;
-    auto hash = pair.second;
-	auto dist = HCost(c, other->anchor);
-    if (dist < minDist || dist == minDist && openClosed[hash].g > openClosed[bestCandidateHash].g)
-	{
-		minDist = dist;
-		bestCandidate = c;
-		bestCandidateHash = hash;
-	}
 	open[openClosed[bestCandidateHash].loc] = open.back();
 	openClosed[open.back().second].loc = openClosed[bestCandidateHash].loc;
 	open.pop_back();
@@ -227,7 +209,7 @@ bool RASSFrontier<Env, State>::DoSingleSearchStep()
 		{
 			//gValues[nhash] = g;
 			open.push_back(std::make_pair(neighbor, nhash));
-            RASSOpenClosedData<State> data;
+            OpenClosedDataM<State> data;
             data.g = g;
             data.loc = open.size() - 1;
             data.parent = bestCandidate;
@@ -246,40 +228,27 @@ bool RASSFrontier<Env, State>::DoSingleSearchStep()
 		{
 			
 			//anchorH = HCost(anchor, other->start);
+			
+			
 			auto hh = HCost(bestCandidate, other->start);
             if (hh < anchorH || anchorH < 0)
             {
                 anchor = bestCandidate;
                 anchorH = hh;
                 anchorG = openClosed[bestCandidateHash].g;
+				//std::cout << numOfExp << ": " << HCost(anchor, other->anchor) << " " << HCost(anchor, start) << " " << HCost(other->anchor, start) << " " << HCost(anchor, other->start) << " " << HCost(other->anchor, other->start) << std::endl;
             }
             else if (hh == anchorH)
             {
-                if (openClosed[bestCandidateHash].g < anchorG)
+                if (openClosed[bestCandidateHash].g > anchorG)
                 {
                     anchor = bestCandidate;
                     anchorG = openClosed[bestCandidateHash].g;
+					//std::cout << numOfExp << ": " << HCost(anchor, other->anchor) << " " << HCost(anchor, start) << " " << HCost(other->anchor, start) << " " << HCost(anchor, other->start) << " " << HCost(other->anchor, other->start) << std::endl;
                 }
             }
-			/*
-			auto hh = HCost(bestCandidate, other->start);
-			if (openClosed[bestCandidateHash].g > anchorG)
-            {
-                anchor = bestCandidate;
-                anchorH = hh;
-                anchorG = openClosed[bestCandidateHash].g;
-            }
-            else if (openClosed[bestCandidateHash].g == anchorG)
-            {
-                if (hh < anchorH)
-                {
-                    anchor = bestCandidate;
-                    anchorG = openClosed[bestCandidateHash].g;
-					anchorH = hh;
-                }
-            }
-			*/
-            break;
+
+			break;
 		}
         case Random:
 		{
@@ -320,28 +289,28 @@ bool RASSFrontier<Env, State>::DoSingleSearchStep()
 
 
 template <class Env,  class State>
-void RASSFrontier<Env, State>::SetSeed(unsigned int seed)
+void MultiTASFrontier<Env, State>::SetSeed(unsigned int seed)
 {
 	this->seed = seed;
 }
 
 template <class Env, class State>
-class RASS
+class MultiTAS
 {
 private:
 	int turn = 0;
 public:
 	int episode = -1;
 	double pathRatio;
-	RASSFrontier<Env, State>* ff;
-	RASSFrontier<Env, State>* bf;
-	RASS();
-	RASS(Env *_env, State _start, State _goal, Heuristic<State> *hf, Heuristic<State> *hb, int _sampleCount);
-	~RASS(){}
+	MultiTASFrontier<Env, State>* ff;
+	MultiTASFrontier<Env, State>* bf;
+	MultiTAS();
+	MultiTAS(Env *_env, State _start, State _goal, Heuristic<State> *hf, Heuristic<State> *hb, int _sampleCount);
+	~MultiTAS(){}
 	void Init(Env *_env, State _start, State _goal, Heuristic<State> *hf, Heuristic<State> *hb, int _sampleCount)
 	{
-		ff = new RASSFrontier<Env, State>(_env, _start, hf, _sampleCount);
-		bf = new RASSFrontier<Env, State>(_env, _goal, hb, _sampleCount);
+		ff = new MultiTASFrontier<Env, State>(_env, _start, hf, _sampleCount);
+		bf = new MultiTASFrontier<Env, State>(_env, _goal, hb, _sampleCount);
 		ff->other = bf;
 		bf->other = ff;
 		ff.anchorH = ff.HCost(_start, _goal);
@@ -401,7 +370,7 @@ public:
 			path.push_back(front[i]);
 		for (int i = 0; i < back.size(); i++)
 			path.push_back(back[i]);
-		pathRatio = (double)front.size()/(double)path.size();
+		pathRatio = min((double)front.size(), (double)back.size())/(double)path.size();
 	}
 	void GetPath(std::vector<State> &path)
 	{
@@ -421,7 +390,7 @@ public:
 				ff->h = bf->h;
 				//std::cout << "TEST: " << bf->h->HCost(ff->anchor, bf->anchor) << std::endl;
 				std::cout << "episode(" << episode << "): " << count / episode << std::endl;
-				std::cout << ff->HCost(ff->anchor, bf->start) << " " << ff->anchorH << std::endl;
+				//std::cout << ff->HCost(ff->anchor, bf->start) << " " << ff->anchorH << std::endl;
 			}
 			count++;
 			if (DoSingleSearchStep())
@@ -438,13 +407,13 @@ public:
 		this.seed = seed;
 	}
 
-	void SetAnchorSelection(kAnchorSelection selection, kAnchorSelection selection2)
+    void SetAnchorSelection(kAnchorSelection selection, kAnchorSelection selection2)
     {
         ff->anchorSelection = selection;
         bf->anchorSelection = selection2;
     }
 
-    void SetAnchorSelection(kAnchorSelection selection)
+	void SetAnchorSelection(kAnchorSelection selection)
     {
         ff->anchorSelection = selection;
         bf->anchorSelection = selection;
@@ -453,10 +422,10 @@ public:
 
 
 template <class Env, class State>
-RASS<Env, State>::RASS(Env *_env, State _start, State _goal, Heuristic<State> *hf, Heuristic<State> *hb, int _sampleCount)
+MultiTAS<Env, State>::MultiTAS(Env *_env, State _start, State _goal, Heuristic<State> *hf, Heuristic<State> *hb, int _sampleCount)
 {
-	ff = new RASSFrontier<Env, State>(_env, _start, hf, _sampleCount);
-	bf = new RASSFrontier<Env, State>(_env, _goal, hb, _sampleCount);
+	ff = new MultiTASFrontier<Env, State>(_env, _start, hf, _sampleCount);
+	bf = new MultiTASFrontier<Env, State>(_env, _goal, hb, _sampleCount);
 	ff->other = bf;
 	bf->other = ff;
 }

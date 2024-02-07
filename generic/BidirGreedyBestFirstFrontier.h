@@ -169,6 +169,7 @@ public:
     {
         return rendezvous;
     }
+	BidirGreedyBestFirstFrontier<state, action, environment, openList>* other;
 private:
 	uint64_t nodesTouched, nodesExpanded;
 	
@@ -483,17 +484,23 @@ bool BidirGreedyBestFirstFrontier<state,action,environment,openList>::DoSingleSe
 												   openClosedList.Lookup(nodeid).g+edgeCosts[x],
 												   h,
 												   nodeid);
-                        if (visited.find(_hash) != visited.end())//(visited[_hash])
-                        {
-                            rendezvous = neighbors[x];
+                        uint64_t theID;
+						if (other->openClosedList.Lookup(_hash, theID) != kNotFound)
+						{
+							rendezvous = neighbors[x];
 							done = true;
                             return true;
-                        }
-                        else
-                        {
-							visited.insert(_hash);
-                            //visited[_hash] = true;
-                        }
+						}
+						//if (visited.find(_hash) != visited.end())
+                        //{
+                        //    rendezvous = neighbors[x];
+						//	done = true;
+                        //    return true;
+                        //}
+                        //else
+                        //{
+						//	visited.insert(_hash);
+                        //}
 					}
 					else {
                         auto _hash = env->GetStateHash(neighbors[x]);
@@ -505,17 +512,23 @@ bool BidirGreedyBestFirstFrontier<state,action,environment,openList>::DoSingleSe
 												   nodeid);
 						//cout << "NOW" << endl;
 						//cout << "LOG: " << openClosedList.Lookup(_hash).data << endl;
-                        if (visited.find(_hash) != visited.end())//visited[_hash])
-                        {
-                            rendezvous = neighbors[x];
+						uint64_t theID;
+						if (other->openClosedList.Lookup(_hash, theID) != kNotFound)
+						{
+							rendezvous = neighbors[x];
 							done = true;
                             return true;
-                        }
-                        else
-                        {
-							visited.insert(_hash);
-                            //visited[_hash] = true;
-                        }
+						}
+                        //if (visited.find(_hash) != visited.end())//visited[_hash])
+                        //{
+                        //    rendezvous = neighbors[x];
+						//	done = true;
+                        //    return true;
+                        //}
+                        //else
+                        //{
+						//	visited.insert(_hash);
+                        //}
 					}
 //					if (loc == -1)
 //					{ // duplicate edges

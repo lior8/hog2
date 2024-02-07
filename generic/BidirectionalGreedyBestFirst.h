@@ -9,10 +9,11 @@ template <class state, class action, class environment, class openList = AStarOp
 class BidirectionalGreedyBestFirst {
 public:
 	std::set<uint64_t> visited;
-    BidirGreedyBestFirstFrontier<state, action, environment> f;// = new CollisionTemplateAStar<state, action, environment>();
-	BidirGreedyBestFirstFrontier<state, action, environment> b;// = new CollisionTemplateAStar<state, action, environment>();
+    BidirGreedyBestFirstFrontier<state, action, environment, openList> f;// = new CollisionTemplateAStar<state, action, environment>();
+	BidirGreedyBestFirstFrontier<state, action, environment, openList> b;// = new CollisionTemplateAStar<state, action, environment>();
 	BidirectionalGreedyBestFirst() {
-		
+		f.other = &b;
+		b.other = &f;
 	}
 	virtual ~BidirectionalGreedyBestFirst() {}
 	void SetPhi(std::function<double(double, double)> p)
@@ -56,8 +57,6 @@ void BidirectionalGreedyBestFirst<state,action,environment,openList>::GetPath(en
 		auto res_f = f.DoSingleSearchStep(fPath, visited);
 		auto res_b = b.DoSingleSearchStep(bPath, visited);
 		state rend;
-		if (res_f)
-
 		if (res_f || res_b)
 		{
 			if (res_f)

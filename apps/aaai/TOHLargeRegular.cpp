@@ -14,20 +14,21 @@
 #include "MultipleAdditiveHeuristic.h"
 //#include "TASTest.h"
 #include "TASS4.h"
-#include "TASH.h"
 #include "TASS3.h"
 //#include "FastDict.h"
 #include "TTBS.h"
 //#include "RASFast.h"
 #include "RASS.h"
 #include "DNode.h"
-#include "TOHWrapper.h"
-#include "MultiTAS.h"
 #include "TemporalSearch.h"
 #include "BidirectionalGreedyBestFirst.h"
 
 using namespace std;
 
+double Phi10(double h, double g)
+{
+    return g + 10.0 * h;
+}
 
 template<class state>
 class HeuristicsGroup
@@ -111,39 +112,6 @@ class GroupHeuristic : public Heuristic<state>
 	}
 };
 
-
-
-template<class state>
-class WeightedGroupHeuristic : public GroupHeuristic<state>
-{
-	public:
-	double weight;
-	vector<HeuristicsGroup<state>*> groups;
-	WeightedGroupHeuristic(double _weight)
-	{
-		weight = _weight;
-	}
-	double HCost(const state &state1, const state &state2) const
-    {
-        double res = 0;
-		int bestIndex = 0;
-		cout << "===========" << endl;
-        for (int j = 0; j < groups.size(); j++)
-        {
-            double partialRes = 0;
-			for (int i = 0; i < groups[j]->heuristics.size(); i++)
-			{
-				cout << fabs(groups[j]->heuristics[i]->HCost(state1, state1) - groups[j]->heuristics[i]->HCost(state2, state2)) << endl;
-				partialRes += fabs(groups[j]->heuristics[i]->HCost(state1, state1) - groups[j]->heuristics[i]->HCost(state2, state2)) * pow(weight, groups[j]->heuristics.size() - i - 1);
-			}
-			cout << ':: ' << partialRes << endl;
-			cout << '-----' << endl;
-            res = max(res, partialRes);
-        }
-		cout << "===========" << endl;
-	    return res;
-    }
-};
 
 
 
@@ -239,66 +207,6 @@ void BuildSinglePDB(Heuristic<TOHState<numDisks>> &h, const TOHState<numDisks> &
 	h.heuristics.push_back(pdb2);
 }
 
-
-template <int numDisks, int pdb1Disks, int pdb2Disks = numDisks-pdb1Disks>
-void BuildMultiplePDBs(Heuristic<TOHState<numDisks>> &h, const TOHState<numDisks> &pivot1)
-{
-	TOH<numDisks> toh;
-	TOH<pdb1Disks> absToh1;
-	TOH<pdb2Disks> absToh2;
-	TOHState<pdb1Disks> absTohState1;
-	
-	//TOHPDB<pdb1Disks, numDisks, pdb2Disks> *pdb1 = new TOHPDB<pdb1Disks, numDisks, pdb2Disks>(&absToh1, pivot1); // top disks
-	TOHPDB<pdb1Disks, numDisks> *pdb1 = new TOHPDB<pdb1Disks, numDisks>(&absToh1, pivot1); // bottom disks
-	TOHPDB<pdb2Disks, numDisks, pdb1Disks> *pdb2 = new TOHPDB<pdb2Disks, numDisks, pdb1Disks>(&absToh2, pivot1); // bottom disks
-	//TOHPDB<pdb1Disks, numDisks, 2> *pdb3 = new TOHPDB<pdb1Disks, numDisks, 2>(&absToh1, pivot1); // bottom disks
-	//TOHPDB<pdb1Disks, numDisks, 3> *pdb4 = new TOHPDB<pdb1Disks, numDisks, 3>(&absToh1, pivot1); // bottom disks
-	//TOHPDB<pdb1Disks, numDisks, 4> *pdb5 = new TOHPDB<pdb1Disks, numDisks, 4>(&absToh1, pivot1); // bottom disks
-	//TOHPDB<pdb1Disks, numDisks, 5> *pdb6 = new TOHPDB<pdb1Disks, numDisks, 5>(&absToh1, pivot1); // bottom disks
-	pdb1->BuildPDB(pivot1, std::thread::hardware_concurrency(), false);
-	pdb2->BuildPDB(pivot1, std::thread::hardware_concurrency(), false);
-	//pdb3->BuildPDB(pivot1, std::thread::hardware_concurrency(), false);
-	//pdb4->BuildPDB(pivot1, std::thread::hardware_concurrency(), false);
-	//pdb5->BuildPDB(pivot1, std::thread::hardware_concurrency(), false);
-	//pdb6->BuildPDB(pivot1, std::thread::hardware_concurrency(), false);
-	h.lookups.resize(0);
-	h.heuristics.resize(0);
-	h.heuristics.push_back(pdb1);
-	h.heuristics.push_back(pdb2);
-	//h.heuristics.push_back(pdb3);
-	//h.heuristics.push_back(pdb4);
-	//h.heuristics.push_back(pdb5);
-	//h.heuristics.push_back(pdb6);
-}
-
-
-template <int numDisks, int pdb1Disks>
-void BuildMultiLookupPDB(Heuristic<TOHState<numDisks>> &h, const TOHState<numDisks> &pivot1, int pdbCount, int step)
-{
-	TOH<numDisks> toh;
-	TOH<pdb1Disks> absToh1;
-	//TOH<pdb2Disks> absToh2;
-	TOHState<pdb1Disks> absTohState1;
-	//TOHState<pdb2Disks> absTohState2;
-	TOHPDB<pdb1Disks, numDisks> *pdb = new TOHPDB<pdb1Disks, numDisks>(&absToh1, pivot1); // bottom disks
-	pdb->BuildPDB(pivot1, std::thread::hardware_concurrency(), false);
-	h.lookups.resize(0);
-	h.heuristics.resize(0);
-
-	for (int i = 0; i < pdbCount; i++)
-	{
-		cout << i * step << " ";
-		TOHPDBWrapper<pdb1Disks, numDisks> *wrapper = new TOHPDBWrapper<pdb1Disks, numDisks>(&absToh1, pivot1);
-		wrapper->SetOffset(i * step);
-		wrapper->SetBasePDB(pdb);
-		//PDBHeuristic<TOHState<16>, TOHMove, TOH<16>, TOHState<numDisks>> *_h = wrapper;
-		h.heuristics.push_back(wrapper);
-	}
-
-	
-	//h.heuristics.push_back(pdb2);
-}
-
 template<int numOfDisks, int pdb1Disks>
 void BuildTOHPDB(TOHState<numOfDisks> start, TOHState<numOfDisks> goal, TOHState<numOfDisks> aux, GroupHeuristic<TOHState<numOfDisks>> &hm)
 {
@@ -310,6 +218,41 @@ void BuildTOHPDB(TOHState<numOfDisks> start, TOHState<numOfDisks> goal, TOHState
 	hm.AddGroup({spec1.heuristics[0]});
 	hm.AddGroup({spec2.heuristics[0]});
 	hm.AddGroup({spec3.heuristics[0]});
+}
+
+template <int numDisks, int pdb1Disks, int pdb2Disks = numDisks % pdb1Disks>
+void BuildMultiplePDBs(Heuristic<TOHState<numDisks>> &h, const TOHState<numDisks> &pivot1)
+{
+	TOH<numDisks> toh;
+	TOH<pdb1Disks> absToh1;
+	TOH<pdb2Disks> absToh2;
+	TOHState<pdb1Disks> absTohState1;
+
+	h.lookups.resize(0);
+	h.heuristics.resize(0);
+
+	TOHPDB<pdb1Disks, numDisks> *pdb1 = new TOHPDB<pdb1Disks, numDisks>(&absToh1, pivot1); // bottom disks
+	pdb1->BuildPDB(pivot1, std::thread::hardware_concurrency(), false);
+	h.heuristics.push_back(pdb1);
+
+	if (numDisks >= 24)
+	{
+		TOHPDB<pdb1Disks, numDisks, pdb1Disks> *pdb2 = new TOHPDB<pdb1Disks, numDisks, pdb1Disks>(&absToh1, pivot1); // bottom disks
+		pdb2->BuildPDB(pivot1, std::thread::hardware_concurrency(), false);
+		h.heuristics.push_back(pdb2);
+		if (numDisks > 24)
+		{
+			TOHPDB<pdb2Disks, numDisks, pdb1Disks> *pdb3 = new TOHPDB<pdb2Disks, numDisks, pdb1Disks>(&absToh2, pivot1); // bottom disks
+			pdb3->BuildPDB(pivot1, std::thread::hardware_concurrency(), false);
+			h.heuristics.push_back(pdb3);
+		}
+	}
+	else
+	{
+		TOHPDB<pdb2Disks, numDisks, pdb1Disks> *pdb2 = new TOHPDB<pdb2Disks, numDisks, pdb1Disks>(&absToh2, pivot1); // bottom disks
+		pdb2->BuildPDB(pivot1, std::thread::hardware_concurrency(), false);
+		h.heuristics.push_back(pdb2);
+	}
 }
 
 template<int numDisks, int pdb1Disks, int maxPivots = 5>
@@ -335,7 +278,7 @@ void HUpdate(TOHState<numDisks> s, TOHState<numDisks> g, Heuristic<TOHState<numD
 		mhh->RemoveGroup(la);
 	}
 	*/
-	while(mhh->groups.size() > 0)
+	while(mhh->groups.size() > 2)
 	{
 		mhh->RemoveGroup(mhh->groups.size() - 1);
 	}
@@ -373,122 +316,6 @@ double Phi(double h, double g)
     return h;
 }
 
-double Phi10(double h, double g)
-{
-    return g + 10.0 * h;
-}
-
-
-template<int numOfDisks, int pdb1Disks>
-void BuildPDBRandomPivots(int seed, int count, GroupHeuristic<TOHState<numOfDisks>> &hm)
-{
-	srandom(seed);
-	for (int i = 0; i < count; i++)
-	{
-		Heuristic<TOHState<numOfDisks>> h;
-		TOHState<numOfDisks> piv;
-		piv.counts[0] = piv.counts[1] = piv.counts[2] = piv.counts[3] = 0;
-		for (int x = numOfDisks; x > 0; x--)
-		{
-			int whichPeg = random()%4;
-			piv.disks[whichPeg][piv.counts[whichPeg]] = x;
-			piv.counts[whichPeg]++;
-		}
-		BuildSinglePDB<numOfDisks, pdb1Disks>(h, piv);
-		hm.AddGroup({h.heuristics[0]});
-	}
-}
-
-template<int numOfDisks, int pdb1Disks>
-void TOHPivotAnalysis(int seed_problem, string alg, GroupHeuristic<TOHState<numOfDisks>> &hm, double &acc, int withGoals = 1)
-{
-    srandom(seed_problem);
-    TOH<numOfDisks> *toh = new TOH<numOfDisks>();
-    TOHState<numOfDisks> start, goal, aux;
-    Heuristic<TOHState<numOfDisks>> hf, hb, h1, h2, h3, h4;
-    vector<TOHState<numOfDisks>> path;
-    start.counts[0] = start.counts[1] = start.counts[2] = start.counts[3] = 0;
-	for (int x = numOfDisks; x > 0; x--)
-	{
-		int whichPeg = random()%4;
-		start.disks[whichPeg][start.counts[whichPeg]] = x;
-		start.counts[whichPeg]++;
-	}
-    goal.counts[0] = goal.counts[1] = goal.counts[2] = goal.counts[3] = 0;
-	for (int x = numOfDisks; x > 0; x--)
-	{
-		int whichPeg = random()%4;
-		goal.disks[whichPeg][goal.counts[whichPeg]] = x;
-		goal.counts[whichPeg]++;
-	}
-	
-	Heuristic<TOHState<numOfDisks>> spec1, spec2, spec3;
-	if (withGoals == 1){
-		BuildSinglePDB<numOfDisks, pdb1Disks>(spec1, start);
-		BuildSinglePDB<numOfDisks, pdb1Disks>(spec2, goal);
-		hm.AddGroup({spec1.heuristics[0]});
-		hm.AddGroup({spec2.heuristics[0]});
-	}
-
-	std::cout << "---------------- " << seed_problem << " ----------------"  << std::endl;
-    cout << start << endl;
-    cout << goal << endl;
-
-	Timer timer;
-
-	if (alg == "tas-t")
-	{
-		TASS<TOH<numOfDisks>, TOHState<numOfDisks>> tas(toh, start, goal, &hm, &hm, 10);
-		tas.SetAnchorSelection(Temporal);
-		timer.StartTimer();
-		tas.GetPath(path);
-		timer.EndTimer();
-		acc += tas.GetNodesExpanded();
-		cout << "TAS-T: " << tas.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << path.size() << " " << tas.pathRatio << endl;
-		delete tas.ff;
-		delete tas.bf;
-	}
-	else if (alg == "tas-a")
-	{
-		TASS<TOH<numOfDisks>, TOHState<numOfDisks>> tas(toh, start, goal, &hm, &hm, 10);
-		tas.SetAnchorSelection(Anchor);
-		timer.StartTimer();
-		tas.GetPath(path);
-		timer.EndTimer();
-		acc += tas.GetNodesExpanded();
-		cout << "TAS-A: " << tas.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << path.size() << " " << tas.pathRatio << endl;
-		delete tas.ff;
-		delete tas.bf;
-	}
-	else if (alg == "tas-af")
-	{
-		TASS<TOH<numOfDisks>, TOHState<numOfDisks>> tas(toh, start, goal, &hm, &hm, 10);
-		tas.SetAnchorSelection(Anchor, Fixed);
-		timer.StartTimer();
-		tas.GetPath(path);
-		timer.EndTimer();
-		acc += tas.GetNodesExpanded();
-		cout << "TAS-AF: " << tas.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << path.size() << " " << tas.pathRatio << endl;
-		delete tas.ff;
-		delete tas.bf;
-	}
-	else if (alg == "gbfs")
-	{
-		TemplateAStar<TOHState<numOfDisks>, TOHMove, TOH<numOfDisks>> astar;
-		astar.SetPhi(Phi);
-		astar.SetHeuristic(&hm);
-    	timer.StartTimer();
-		astar.GetPath(toh, start, goal, path);
-    	timer.EndTimer();
-		acc += astar.GetNodesExpanded();
-		cout << "GBFS: " << astar.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << path.size() << endl;
-	}
-	if (withGoals == 1)
-	{
-		hm.RemoveGroup(hm.groups.size() - 1);
-		hm.RemoveGroup(hm.groups.size() - 1);
-	}
-}
 
 
 template<int numOfDisks, int pdb1Disks>
@@ -515,36 +342,10 @@ void FixedHeuristicTOHTest(int seed_problem, string alg, GroupHeuristic<TOHState
 	}
 
 	Heuristic<TOHState<numOfDisks>> spec1, spec2, spec3;
-	Timer pdbTime;
-	pdbTime.StartTimer();
 	BuildSinglePDB<numOfDisks, pdb1Disks>(spec1, start);
 	BuildSinglePDB<numOfDisks, pdb1Disks>(spec2, goal);
-	pdbTime.EndTimer();
-	cout << "PDB time: " <<  pdbTime.GetElapsedTime() << endl;
 	hm.AddGroup({spec1.heuristics[0]});
 	hm.AddGroup({spec2.heuristics[0]});
-	//BuildMultiplePDBs<numOfDisks, pdb1Disks>(spec1, start);
-	//BuildMultiplePDBs<numOfDisks, pdb1Disks>(spec2, goal);
-	//hm.AddGroup({spec1.heuristics[0], spec1.heuristics[1]});
-	//hm.AddGroup({spec2.heuristics[0], spec2.heuristics[1]});
-	/*
-	int pdbCount = numOfDisks - pdb1Disks + 1;
-	int step = 1;
-	BuildMultiLookupPDB<numOfDisks, pdb1Disks>(spec1, start, pdbCount, step);
-	BuildMultiLookupPDB<numOfDisks, pdb1Disks>(spec2, goal, pdbCount, step);
-	//for (int i = 0; i < spec1.heuristics.size(); i++)
-	//{
-	//	hm.AddGroup({spec1.heuristics[i]});
-	//	hm.AddGroup({spec2.heuristics[i]});
-	//}
-	hm.AddGroup(spec1.heuristics);
-	hm.AddGroup(spec2.heuristics);
-	
-	BuildMultiplePDBs<numOfDisks, pdb1Disks>(spec1, start);
-	BuildMultiplePDBs<numOfDisks, pdb1Disks>(spec2, goal);
-	hm.AddGroup({spec1.heuristics});
-	hm.AddGroup({spec2.heuristics});
-	*/
 
 	std::cout << "---------------- " << seed_problem << " ----------------"  << std::endl;
     cout << start << endl;
@@ -585,39 +386,6 @@ void FixedHeuristicTOHTest(int seed_problem, string alg, GroupHeuristic<TOHState
 		delete tas.ff;
 		delete tas.bf;
 	}
-	else if (alg == "ras-t")
-	{
-		RASS<TOH<numOfDisks>, TOHState<numOfDisks>> ras(toh, start, goal, &hm, &hm, 10);
-		ras.SetAnchorSelection(Temporal);
-		timer.StartTimer();
-		ras.GetPath(path);
-		timer.EndTimer();
-		cout << "RAS-T: " << ras.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << path.size() << " " << ras.pathRatio << endl;
-		delete ras.ff;
-		delete ras.bf;
-	}
-	else if (alg == "ras-a")
-	{
-		RASS<TOH<numOfDisks>, TOHState<numOfDisks>> ras(toh, start, goal, &hm, &hm, 10);
-		ras.SetAnchorSelection(Anchor);
-		timer.StartTimer();
-		ras.GetPath(path);
-		timer.EndTimer();
-		cout << "RAS-A: " << ras.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << path.size() << " " << ras.pathRatio << endl;
-		delete ras.ff;
-		delete ras.bf;
-	}
-	else if (alg == "ras-af")
-	{
-		RASS<TOH<numOfDisks>, TOHState<numOfDisks>> ras(toh, start, goal, &hm, &hm, 10);
-		ras.SetAnchorSelection(Anchor, Fixed);
-		timer.StartTimer();
-		ras.GetPath(path);
-		timer.EndTimer();
-		cout << "RAS-AF: " << ras.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << path.size() << " " << ras.pathRatio << endl;
-		delete ras.ff;
-		delete ras.bf;
-	}
 	else if (alg == "gbfs")
 	{
 		TemplateAStar<TOHState<numOfDisks>, TOHMove, TOH<numOfDisks>> astar;
@@ -627,25 +395,6 @@ void FixedHeuristicTOHTest(int seed_problem, string alg, GroupHeuristic<TOHState
 		astar.GetPath(toh, start, goal, path);
     	timer.EndTimer();
 		cout << "GBFS: " << astar.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << path.size() << endl;
-	}
-	else if (alg == "astar")
-	{
-		TemplateAStar<TOHState<numOfDisks>, TOHMove, TOH<numOfDisks>> astar;
-		astar.SetHeuristic(&hm);
-    	timer.StartTimer();
-		astar.GetPath(toh, start, goal, path);
-    	timer.EndTimer();
-		cout << "A*: " << astar.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << path.size() << endl;
-	}
-	else if (alg == "wa*")
-	{
-		TemplateAStar<TOHState<numOfDisks>, TOHMove, TOH<numOfDisks>> astar;
-		astar.SetPhi(Phi10);
-		astar.SetHeuristic(&hm);
-    	timer.StartTimer();
-		astar.GetPath(toh, start, goal, path);
-    	timer.EndTimer();
-		cout << "WA*: " << astar.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << path.size() << endl;
 	}
 	else if (alg == "ttbs-fifo")
 	{
@@ -671,13 +420,107 @@ void FixedHeuristicTOHTest(int seed_problem, string alg, GroupHeuristic<TOHState
     	timer.EndTimer();
 		cout << "DNR: " << dnr.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << path.size() << " " << dnr.pathRatio << endl;
 	}
-	else if (alg == "ts")
+}
+
+
+template<int numOfDisks, int pdb1Disks>
+void IterativeHeuristicTOHTest(int seed_problem, string alg, int ep, GroupHeuristic<TOHState<numOfDisks>> &hm)
+{
+    srandom(seed_problem);
+    TOH<numOfDisks> *toh = new TOH<numOfDisks>();
+    TOHState<numOfDisks> start, goal, aux;
+    Heuristic<TOHState<numOfDisks>> hf, hb, h1, h2, h3, h4;
+    vector<TOHState<numOfDisks>> path;
+    start.counts[0] = start.counts[1] = start.counts[2] = start.counts[3] = 0;
+	for (int x = numOfDisks; x > 0; x--)
 	{
-		TemporalSearch<TOH<numOfDisks>, TOHState<numOfDisks>> ts(toh, start, goal, &hm, 10);
+		int whichPeg = random()%4;
+		start.disks[whichPeg][start.counts[whichPeg]] = x;
+		start.counts[whichPeg]++;
+	}
+    goal.counts[0] = goal.counts[1] = goal.counts[2] = goal.counts[3] = 0;
+	for (int x = numOfDisks; x > 0; x--)
+	{
+		int whichPeg = random()%4;
+		goal.disks[whichPeg][goal.counts[whichPeg]] = x;
+		goal.counts[whichPeg]++;
+	}
+
+	Heuristic<TOHState<numOfDisks>> spec1, spec2, spec3;
+	BuildSinglePDB<numOfDisks, pdb1Disks>(spec1, start);
+	BuildSinglePDB<numOfDisks, pdb1Disks>(spec2, goal);
+	hm.AddGroup({spec1.heuristics[0]});
+	hm.AddGroup({spec2.heuristics[0]});
+
+	//BuildMultiplePDBs<numOfDisks, pdb1Disks>(spec1, start);
+	//BuildMultiplePDBs<numOfDisks, pdb1Disks>(spec2, goal);
+	//vector<Heuristic<TOHState<numOfDisks>>*> v1;
+	//vector<Heuristic<TOHState<numOfDisks>>*> v2;
+	//for (auto item : spec1.heuristics)
+	//{
+	//	v1.push_back(item);
+	//}
+	//for (auto item : spec2.heuristics)
+	//{
+	//	v2.push_back(item);
+	//}
+	//hm.AddGroup(v1);
+	//hm.AddGroup(v2);
+
+	std::cout << "---------------- " << seed_problem << " ----------------"  << std::endl;
+    cout << start << endl;
+    cout << goal << endl;
+
+	Timer timer;
+	
+    if (alg == "tas-af")
+	{
+		TASS<TOH<numOfDisks>, TOHState<numOfDisks>> tas(toh, start, goal, &hm, &hm, 10);
+		tas.SetAnchorSelection(Anchor, Fixed);
+        tas.SetHeuristicUpdate(HUpdate<numOfDisks, pdb1Disks>);
+        tas.episode = ep;
 		timer.StartTimer();
-		ts.GetPath(path);
+		tas.GetPath(path);
 		timer.EndTimer();
-		cout << "TS: " << ts.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << path.size() << endl;
+		cout << "TAS-AF: " << tas.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << path.size() << " " << tas.pathRatio << endl;
+		delete tas.ff;
+		delete tas.bf;
+	}
+	else if (alg == "tas-a")
+	{
+		TASS<TOH<numOfDisks>, TOHState<numOfDisks>> tas(toh, start, goal, &hm, &hm, 10);
+		tas.SetAnchorSelection(Anchor);
+        tas.SetHeuristicUpdate(HUpdate<numOfDisks, pdb1Disks>);
+        tas.episode = ep;
+		timer.StartTimer();
+		tas.GetPath(path);
+		timer.EndTimer();
+		cout << "TAS-A: " << tas.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << path.size() << " " << tas.pathRatio << endl;
+		delete tas.ff;
+		delete tas.bf;
+	}
+	else if (alg == "tas-t")
+	{
+		TASS<TOH<numOfDisks>, TOHState<numOfDisks>> tas(toh, start, goal, &hm, &hm, 10);
+		tas.SetAnchorSelection(Temporal);
+        tas.SetHeuristicUpdate(HUpdate<numOfDisks, pdb1Disks>);
+        tas.episode = ep;
+		timer.StartTimer();
+		tas.GetPath(path);
+		timer.EndTimer();
+		cout << "TAS-T: " << tas.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << path.size() << " " << tas.pathRatio << endl;
+		delete tas.ff;
+		delete tas.bf;
+	}
+	else if (alg == "gbfs")
+	{
+		TemplateAStar<TOHState<numOfDisks>, TOHMove, TOH<numOfDisks>> astar;
+		astar.SetPhi(Phi);
+		astar.SetHeuristic(&hm);
+    	timer.StartTimer();
+		astar.GetPath(toh, start, goal, path);
+    	timer.EndTimer();
+		cout << "GBFS: " << astar.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << path.size() << endl;
 	}
 	else if (alg == "bgbfs")
 	{
@@ -690,99 +533,100 @@ void FixedHeuristicTOHTest(int seed_problem, string alg, GroupHeuristic<TOHState
     	timer.StartTimer();
 		bgbfs.GetPath(toh, start, goal, fPath, bPath);
     	timer.EndTimer();
-		cout << "BGBFS: " << bgbfs.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << fPath.size() + bPath.size() - 1<< endl;
+		cout << "BGBFS: " << bgbfs.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << fPath.size() + bPath.size() - 1 << endl;
+	}
+	else if (alg == "wa*")
+	{
+		TemplateAStar<TOHState<numOfDisks>, TOHMove, TOH<numOfDisks>> astar;
+		astar.SetPhi(Phi10);
+		astar.SetHeuristic(&hm);
+    	timer.StartTimer();
+		astar.GetPath(toh, start, goal, path);
+    	timer.EndTimer();
+		cout << "WA*: " << astar.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << path.size() << endl;
+	}
+	else if (alg == "ts")
+	{
+		TemporalSearch<TOH<numOfDisks>, TOHState<numOfDisks>> ts(toh, start, goal, &hm, 10);
+		timer.StartTimer();
+		ts.GetPath(path);
+		timer.EndTimer();
+		cout << "TS: " << ts.GetNodesExpanded() << " " << timer.GetElapsedTime() << " " << path.size() << endl;
 	}
 }
 
 
-
 int main(int argc, char* argv[])
 {
-	
-    //const int psize = 16;
-	//const int pdbsize = 10;
-	string setting = argv[1];
-	for (int i = 1; i <= 100; i++)
-	{
-	int seed = i;// = stoi(argv[2]);
-	if (setting == "14-7")
-	{
-		GroupHeuristic<TOHState<14>> gh;
-		FixedHeuristicTOHTest<14, 7>(seed, argv[3], gh);
-	}
-	else if (setting == "14-10")
-	{
-		GroupHeuristic<TOHState<14>> gh;
-		FixedHeuristicTOHTest<14, 10>(seed, argv[3], gh);
-	}
-	else if (setting == "16-8")
-	{
-		GroupHeuristic<TOHState<16>> gh;
-		FixedHeuristicTOHTest<16, 8>(seed, argv[3], gh);
-	}
-	else if (setting == "16-10")
-	{
-		GroupHeuristic<TOHState<16>> gh;
-		FixedHeuristicTOHTest<16, 10>(seed, argv[3], gh);
-	}
-	else if (setting == "12-8")
-	{
-		GroupHeuristic<TOHState<12>> gh;
-		FixedHeuristicTOHTest<12, 8>(seed, argv[3], gh);
-	}
-	else if (setting == "12-10")
-	{
-		GroupHeuristic<TOHState<12>> gh;
-		FixedHeuristicTOHTest<12, 10>(seed, argv[3], gh);
-	}
-	else if (setting == "12-6")
-	{
-		GroupHeuristic<TOHState<12>> gh;
-		FixedHeuristicTOHTest<12, 6>(seed, argv[3], gh);
-	}
-	else if (setting == "10-5")
-	{
-		GroupHeuristic<TOHState<10>> gh;
-		FixedHeuristicTOHTest<10, 5>(seed, argv[3], gh);
-	}
-	else if (setting == "10-6")
-	{
-		GroupHeuristic<TOHState<10>> gh;
-		FixedHeuristicTOHTest<10, 6>(seed, argv[3], gh);
-	}
-	else if (setting == "12-7")
-	{
-		GroupHeuristic<TOHState<12>> gh;
-		FixedHeuristicTOHTest<12, 7>(seed, argv[3], gh);
-	}
-	}
-	
-	/*
-	double res = 0;
-	for (int i = 1; i <= 100; i++)
-	{
-		GroupHeuristic<TOHState<12>> gh;
-		BuildPDBRandomPivots<12, 6>(1, stoi(argv[1]), gh);
-		TOHPivotAnalysis<12, 6>(i, argv[3], gh, res, stoi(argv[2]));
-	}
-	cout << "--------------------" << endl;
-	cout << res / 100.0 << endl;
-	
-	for (int i = 1; i <= 100; i++)
-	{
-		int seed = i;
-		GroupHeuristic<TOHState<14>> gh;
-		gh.weight = stod(argv[2]);
-		FixedHeuristicTOHTest<14, 7>(seed, argv[1], gh);
-	}
 
-	
-	int seed = stoi(argv[1]);
-	GroupHeuristic<TOHState<24>> gh;
-	gh.weight = stod(argv[3]);
-	FixedHeuristicTOHTest<24, 12>(seed, argv[2], gh);
-	*/
-	
+    //const int psize = 16;
+	const int pdbsize = 12;
+	//for (int i = 1; i <= 100; i++)
+	//{
+	int size = stoi(argv[1]);
+    int seed = stoi(argv[2]);
+	int ep = -1;
+	if (size == 16)
+	{
+		GroupHeuristic<TOHState<16>> gh;
+		IterativeHeuristicTOHTest<16, pdbsize>(seed, argv[3], ep, gh);
+	}
+	else if (size == 18)
+	{
+		GroupHeuristic<TOHState<18>> gh;
+		IterativeHeuristicTOHTest<18, pdbsize>(seed, argv[3], ep, gh);
+	}
+	else if (size == 20)
+	{
+		GroupHeuristic<TOHState<20>> gh;
+		IterativeHeuristicTOHTest<20, pdbsize>(seed, argv[3], ep, gh);
+	}
+	else if (size == 22)
+	{
+		GroupHeuristic<TOHState<22>> gh;
+		IterativeHeuristicTOHTest<22, pdbsize>(seed, argv[3], ep, gh);
+	}
+	else if (size == 24)
+	{
+		GroupHeuristic<TOHState<24>> gh;
+		IterativeHeuristicTOHTest<24, pdbsize>(seed, argv[3], ep, gh);
+	}
+	else if (size == 26)
+	{
+		GroupHeuristic<TOHState<26>> gh;
+		IterativeHeuristicTOHTest<26, pdbsize>(seed, argv[3], ep, gh);
+	}
+	else if (size == 28)
+	{
+		GroupHeuristic<TOHState<28>> gh;
+		IterativeHeuristicTOHTest<28, pdbsize>(seed, argv[3], ep, gh);
+	}
+	else if (size == 30)
+	{
+		GroupHeuristic<TOHState<30>> gh;
+		IterativeHeuristicTOHTest<30, pdbsize>(seed, argv[3], ep, gh);
+	}
+	else if (size == 32)
+	{
+		GroupHeuristic<TOHState<32>> gh;
+		IterativeHeuristicTOHTest<32, pdbsize>(seed, argv[3], ep, gh);
+	}
+	else if (size == 34)
+	{
+		GroupHeuristic<TOHState<34>> gh;
+		IterativeHeuristicTOHTest<34, pdbsize>(seed, argv[3], ep, gh);
+	}
+	else if (size == 36)
+	{
+		GroupHeuristic<TOHState<36>> gh;
+		IterativeHeuristicTOHTest<36, pdbsize>(seed, argv[3], ep, gh);
+	}
+	//}
+	//for (int i = 1; i <= 100; i++)
+	//{
+	//	GroupHeuristic<TOHState<psize>> gh;
+	//	FixedHeuristicTOHTest<psize, pdbsize>(i, argv[1], gh);
+	//}
 	
 	return 0;
 }
