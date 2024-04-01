@@ -19,6 +19,7 @@
 #include "IDAStar.h"
 #include "PermutationPDB.h"
 #include "LexPermutationPDB.h"
+#include "SVGUtil.h"
 
 IDAStar<MNPuzzleState<4, 4>, slideDir> ida;
 Heuristic<MNPuzzleState<4, 4>> h;
@@ -51,7 +52,7 @@ PermutationPDB<MNPuzzleState<4, 4>, slideDir, MNPuzzle<4, 4>> *pdb4 = 0;
 int main(int argc, char* argv[])
 {
 	InstallHandlers();
-	RunHOGGUI(argc, argv, 1600, 800);
+	RunHOGGUI(argc, argv, 600, 600);
 	return 0;
 }
 
@@ -60,7 +61,7 @@ int main(int argc, char* argv[])
  */
 void InstallHandlers()
 {
-//	InstallKeyboardHandler(MyDisplayHandler, "Record", "Record a movie", kAnyModifier, 'r');
+	InstallKeyboardHandler(MyDisplayHandler, "Picture", "Take a picture", kAnyModifier, '&');
 	InstallKeyboardHandler(MyDisplayHandler, "Randomize", "Get Random State", kAnyModifier, 's');
 //	InstallKeyboardHandler(MyDisplayHandler, "Help", "Draw help", kAnyModifier, '?');
 	InstallWindowHandler(MyWindowHandler);
@@ -135,7 +136,7 @@ void MyWindowHandler(unsigned long windowID, tWindowEventType eType)
 		//glClearColor(0.99, 0.99, 0.99, 1.0);
 		InstallFrameHandler(MyFrameHandler, windowID, 0);
 
-		ReinitViewports(windowID, {-1, -1, 1, 1}, kScaleToFill);
+		ReinitViewports(windowID, {-1, -1, 1, 1}, kScaleToSquare);
 	}
 }
 
@@ -154,7 +155,7 @@ void MyFrameHandler(unsigned long windowID, unsigned int viewport, void *)
 		ida.GetPath(&mnp, start, goal, acts);
 		foundOptimal = true;
 		std::string s = "You solved with "+std::to_string(numActions)+" moves; optimal is between ";
-		s +=std::to_string(std::max((int)mnp.HCost(start), (int)(2*acts.size()/3)))+" and "+std::to_string(acts.size())+" moves";
+		s +=std::to_string(std::max((int)mnp.HCost(start, goal), (int)(2*acts.size()/3)))+" and "+std::to_string(acts.size())+" moves";
 		submitTextToBuffer(s.c_str());
 		printf("%s\n", s.c_str());
 	}
@@ -193,6 +194,11 @@ void MyDisplayHandler(unsigned long windowID, tKeyboardModifier mod, char key)
 	switch (key)
 	{
 //		case 'h': //whichHeuristic = (whichHeuristic+1)%16; break;
+		case '&':
+#ifndef __EMSCRIPTEN__
+			MakeSVG(GetContext(windowID)->display, "/Users/nathanst/Pictures/SVG/STP.svg", 500, 500);
+			break;
+#endif
 		case 's':
 		{
 			submitTextToBuffer("");
