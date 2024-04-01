@@ -1451,31 +1451,34 @@ public:
         for (auto i = std::sregex_iterator(entities.begin(), entities.end(), es_r); i != std::sregex_iterator(); ++i)
         {
             const auto& match = *i;
-            switch (const int type = std::stoi(match[1].str());
-                type) {
+            switch (const int type = std::stoi(match[1].str()); type)
+            {
                 case 3:
                 case 4: // only support single start and goal currently
                 {
                     auto loc = locationMap[count++].second;
                     for (auto y = height; y >= 0; --y)
+                    {
                         for (auto x = 0; x <= width; ++x)
-                            if (loc == width * (height + 1) + (width + 1) * height + (width + 1) * y + x)
-                            {
-                                if (type == 3)
-                                    SetStart(x, y);
-                                else
-                                {
-                                    if (x == 0)
-                                        SetGoal(x - 1, y);
-                                    else if (x == width)
-                                        SetGoal(x + 1, y);
-                                    else if (y == 0)
-                                        SetGoal(x, y - 1);
-                                    else if (y == height)
-                                        SetGoal(x, y + 1);
-                                }
-                                break;
-                            }
+                        {
+                           if (loc == width * (height + 1) + (width + 1) * height + (width + 1) * y + x)
+                           {
+                               if (type == 3)
+                                   SetStart(x, y);
+                               else
+                               {
+                                   if (x == 0)
+                                       SetGoal(x - 1, y);
+                                   else if (x == width)
+                                       SetGoal(x + 1, y);
+                                   else if (y == 0)
+                                       SetGoal(x, y - 1);
+                                   else if (y == height)
+                                       SetGoal(x, y + 1);
+                               }
+                           }
+                        }
+                    }
                     break;
                 }
                 case 5:
@@ -2367,8 +2370,8 @@ double Witness<width, height>::GCost(const WitnessState<width, height> &node, co
 }
 
 template<int width, int height>
-bool Witness<width, height>::GoalTest(
-        const WitnessState<width, height> &node, const WitnessState<width, height> &goal) const
+bool Witness<width, height>::GoalTest(const WitnessState<width, height> &node,
+                                      const WitnessState<width, height> &g) const
 {
     // Check constraints
     return GoalTest(node);
