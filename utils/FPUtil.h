@@ -25,10 +25,10 @@
 // Floating point comparisons 
 static const double TOLERANCE = 0.000001;    // floating point tolerance
 
-inline bool fless(double a, double b) { return (a < b - TOLERANCE); }
-inline bool fgreater(double a, double b) { return (a > b + TOLERANCE); }
-inline bool flesseq(double a, double b) { return !fgreater(a, b); }
-inline bool fgreatereq(double a, double b) { return !fless(a, b); }
+inline bool fless(double a, double b, double tolerance=TOLERANCE) { return (a < b - tolerance); }
+inline bool fgreater(double a, double b, double tolerance=TOLERANCE) { return (a > b + tolerance); }
+inline bool flesseq(double a, double b, double tolerance=TOLERANCE) { return !fgreater(a, b, tolerance); }
+inline bool fgreatereq(double a, double b, double tolerance=TOLERANCE) { return !fless(a, b, tolerance); }
 inline bool fequal(double a, double b, double tolerance=TOLERANCE)
 { return (a >= b - tolerance) && (a <= b+tolerance); }
 
