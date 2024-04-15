@@ -1306,7 +1306,7 @@ public:
     std::vector<std::pair<int, int>> start;
     std::vector<std::pair<int, int>> goal;
     // constant-time lookup for which goal is nearby
-    // value is hte index in the goal array+1 (0 index means no goal)
+    // value is the index in the goal array+1 (0 index means no goal)
     std::array<int, (width + 1) * (height + 1)> goalMap;
     //	const int kStartX = 0, kStartY = 0;
 
@@ -3896,10 +3896,9 @@ void Witness<width, height>::Draw(Graphics::Display &display) const
     // remap them onto edges. Loss of efficiency is negligible
     for (int x = 0; x <= width; x++)
     {
-        for (int y = 0; y <= width; y++)
+        for (int y = 0; y <= height; y++)
         {
-            int val;
-            if ((val = goalMap[GetPathIndex(x, y)]) != 0)
+            if (int val = goalMap[GetPathIndex(x, y)]; val != 0)
             {
                 auto endLoc = GetScreenCoord(goal[val - 1].first, goal[val - 1].second);
                 DoLine(display, GetScreenCoord(x, y), endLoc, lineColor);
