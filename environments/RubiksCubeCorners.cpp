@@ -737,7 +737,452 @@ void RubiksCorner::MRUnrank2(int n, uint64_t r, uint64_t &perm)
 	}
 }
 
+Graphics::point transform(const Graphics::point &p)
+{
+	const float cosr = cos(-1.11f);
+	const float sinr = sin(-1.11f);
+	return Graphics::point(p.x+0.5*p.z*cosr, p.y+0.5*p.z*sinr);
+}
 
+bool operator<(const RubiksCorner::triangleColor &s1, const RubiksCorner::triangleColor &s2)
+{
+	return s1.t.p1.z+s1.t.p2.z+s1.t.p3.z > s2.t.p1.z+s2.t.p2.z+s2.t.p3.z;
+}
+//bool operator<(const RubiksCorner::triangleColor &s1, const RubiksCorner::triangleColor &s2)
+//{
+//	return std::min({s1.t.p1.z, s1.t.p2.z, s1.t.p3.z}) > std::min({s2.t.p1.z, s2.t.p2.z, s2.t.p3.z});
+//}
+
+void RubiksCorner::Draw(Graphics::Display &display, const RubiksCornerState &s) const
+{
+	rgbColor colors[7] = {{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}, {1.0, 1.0, 0.0}, {1.0, 0.75, 0.0},{1.0, 1.0, 1.0},};
+	triangles.resize(0);
+	// Get triangles
+	
+	GetTriangles(s, 0);
+	GetTriangles(s, 2);
+	GetTriangles(s, 6);
+	GetTriangles(s, 8);
+	GetTriangles(s, 18);
+	GetTriangles(s, 20);
+	GetTriangles(s, 24);
+	GetTriangles(s, 26);
+	
+	// Do transform
+	// Sort by z
+	std::sort(triangles.begin(),triangles.end());
+
+	// Transform and draw into display
+	for (auto &t : triangles)
+	{
+		display.FillTriangle(transform(t.t.p1),
+							 transform(t.t.p2),
+							 transform(t.t.p3),
+							 colors[1+t.color]);
+	}
+}
+
+void RubiksCorner::GetTriangles(const RubiksCornerState &s, int cube) const
+{
+	const float scale = 0.3;
+	const float offset = 0.95*2.0*scale/3.0;
+	const float offset2 = 2.0*scale/3.0;
+	const float epsilon = 0.002;
+	switch(cube)
+	{
+		case 0:
+		{
+			// Face 0 - cube 0
+			int c = GetFaceColor(0, s);
+			triangles.push_back({{{-scale, -scale, -scale+offset},
+				{-scale, -scale, -scale},
+				{-scale+offset, -scale, -scale}}, c});
+			triangles.push_back({{{-scale+offset, -scale, -scale}, {-scale+offset, -scale, -scale+offset}, {-scale, -scale, -scale+offset}}, c});
+//			glVertex3f(-scale, -scale, -scale+offset);
+//			glVertex3f(-scale, -scale, -scale);
+//			glVertex3f(-scale+offset, -scale, -scale);
+//			glVertex3f(-scale+offset, -scale, -scale+offset);
+
+			SetFaceColor(-1, s);
+			glVertex3f(-scale, -scale+epsilon, -scale+offset2);
+			glVertex3f(-scale, -scale+epsilon, -scale);
+			glVertex3f(-scale+offset2, -scale+epsilon, -scale);
+			glVertex3f(-scale+offset2, -scale+epsilon, -scale+offset2);
+
+			// Face 1 - cube 0
+			c = GetFaceColor(1, s);
+			triangles.push_back({{{-scale, -scale+offset, -scale}, {-scale, -scale+offset, -scale+offset}, {-scale, -scale, -scale+offset}}, c});
+			triangles.push_back({{{-scale, -scale, -scale+offset}, {-scale, -scale, -scale}, {-scale, -scale+offset, -scale}}, c});
+//			glVertex3f(-scale, -scale+offset, -scale);
+//			glVertex3f(-scale, -scale+offset, -scale+offset);
+//			glVertex3f(-scale, -scale, -scale+offset);
+//			glVertex3f(-scale, -scale, -scale);
+
+			SetFaceColor(-1, s);
+			glVertex3f(-scale+epsilon, -scale+offset2, -scale);
+			glVertex3f(-scale+epsilon, -scale+offset2, -scale+offset2);
+			glVertex3f(-scale+epsilon, -scale, -scale+offset2);
+			glVertex3f(-scale+epsilon, -scale, -scale);
+
+			// Face 2 - cube 0
+			c = GetFaceColor(2, s);
+			triangles.push_back({{{-scale, -scale+offset, -scale}, {-scale+offset, -scale+offset, -scale}, {-scale+offset, -scale, -scale}}, c});
+			triangles.push_back({{{-scale+offset, -scale, -scale}, {-scale, -scale, -scale}, {-scale, -scale+offset, -scale}}, c});
+//			glVertex3f(-scale, -scale+offset, -scale);
+//			glVertex3f(-scale+offset, -scale+offset, -scale);
+//			glVertex3f(-scale+offset, -scale, -scale);
+//			glVertex3f(-scale, -scale, -scale);
+
+			SetFaceColor(-1, s);
+			glVertex3f(-scale, -scale+offset2, -scale+epsilon);
+			glVertex3f(-scale+offset2, -scale+offset2, -scale+epsilon);
+			glVertex3f(-scale+offset2, -scale, -scale+epsilon);
+			glVertex3f(-scale, -scale, -scale+epsilon);
+
+		} break;
+		case 2:
+		{
+			// Face 0 - cube 2
+			int c = GetFaceColor(3, s);
+			triangles.push_back({{{scale-offset, -scale, -scale+offset}, {scale-offset, -scale, -scale}, {scale, -scale, -scale}}, c});
+			triangles.push_back({{{scale, -scale, -scale}, {scale, -scale, -scale+offset}, {scale-offset, -scale, -scale+offset}}, c});
+			glVertex3f(scale-offset, -scale, -scale+offset);
+			glVertex3f(scale-offset, -scale, -scale);
+			glVertex3f(scale, -scale, -scale);
+			glVertex3f(scale, -scale, -scale+offset);
+
+			SetFaceColor(-1, s);
+			glVertex3f(scale-offset2, -scale+epsilon, -scale+offset2);
+			glVertex3f(scale-offset2, -scale+epsilon, -scale);
+			glVertex3f(scale, -scale+epsilon, -scale);
+			glVertex3f(scale, -scale+epsilon, -scale+offset2);
+
+			// Face 2 - cube 2
+			c = GetFaceColor(4, s);
+			triangles.push_back({{{scale, -scale+offset, -scale}, {scale-offset, -scale+offset, -scale}, {scale-offset, -scale, -scale}}, c});
+			triangles.push_back({{{scale-offset, -scale, -scale}, {scale, -scale, -scale}, {scale, -scale+offset, -scale}}, c});
+			glVertex3f(scale, -scale+offset, -scale);
+			glVertex3f(scale-offset, -scale+offset, -scale);
+			glVertex3f(scale-offset, -scale, -scale);
+			glVertex3f(scale, -scale, -scale);
+
+			SetFaceColor(-1, s);
+			glVertex3f(scale, -scale+offset2, -scale+epsilon);
+			glVertex3f(scale-offset2, -scale+offset2, -scale+epsilon);
+			glVertex3f(scale-offset2, -scale, -scale+epsilon);
+			glVertex3f(scale, -scale, -scale+epsilon);
+
+			// Face 3 - cube 2
+			c = GetFaceColor(5, s);
+			triangles.push_back({{{scale, -scale+offset, -scale}, {scale, -scale+offset, -scale+offset}, {scale, -scale, -scale+offset}}, c});
+			triangles.push_back({{{scale, -scale, -scale+offset}, {scale, -scale, -scale}, {scale, -scale+offset, -scale}}, c});
+			glVertex3f(scale, -scale+offset, -scale);
+			glVertex3f(scale, -scale+offset, -scale+offset);
+			glVertex3f(scale, -scale, -scale+offset);
+			glVertex3f(scale, -scale, -scale);
+
+			SetFaceColor(-1, s);
+			glVertex3f(scale-epsilon, -scale+offset2, -scale);
+			glVertex3f(scale-epsilon, -scale+offset2, -scale+offset2);
+			glVertex3f(scale-epsilon, -scale, -scale+offset2);
+			glVertex3f(scale-epsilon, -scale, -scale);
+		} break;
+		case 6:
+		{
+			// Face 0 - cube 6
+			int c = GetFaceColor(9, s);
+			triangles.push_back({{{-scale, -scale, scale}, {-scale, -scale, scale-offset}, {-scale+offset, -scale, scale-offset}}, c});
+			triangles.push_back({{{-scale+offset, -scale, scale-offset}, {-scale+offset, -scale, scale}, {-scale, -scale, scale}}, c});
+			glVertex3f(-scale, -scale, scale);
+			glVertex3f(-scale, -scale, scale-offset);
+			glVertex3f(-scale+offset, -scale, scale-offset);
+			glVertex3f(-scale+offset, -scale, scale);
+
+			SetFaceColor(-1, s);
+			glVertex3f(-scale, -scale+epsilon, scale);
+			glVertex3f(-scale, -scale+epsilon, scale-offset2);
+			glVertex3f(-scale+offset2, -scale+epsilon, scale-offset2);
+			glVertex3f(-scale+offset2, -scale+epsilon, scale);
+
+			
+			// Face 1 - cube 6
+			c = GetFaceColor(11, s);
+			triangles.push_back({{{-scale, -scale+offset, scale}, {-scale, -scale+offset, scale-offset}, {-scale, -scale, scale-offset}}, c});
+			triangles.push_back({{{-scale, -scale, scale-offset}, {-scale, -scale, scale}, {-scale, -scale+offset, scale}}, c});
+			glVertex3f(-scale, -scale+offset, scale);
+			glVertex3f(-scale, -scale+offset, scale-offset);
+			glVertex3f(-scale, -scale, scale-offset);
+			glVertex3f(-scale, -scale, scale);
+
+			SetFaceColor(-1, s);
+			glVertex3f(-scale+epsilon, -scale+offset2, scale);
+			glVertex3f(-scale+epsilon, -scale+offset2, scale-offset2);
+			glVertex3f(-scale+epsilon, -scale, scale-offset2);
+			glVertex3f(-scale+epsilon, -scale, scale);
+
+			// Face 4 - cube 6
+			c = GetFaceColor(10, s);
+			triangles.push_back({{{-scale, -scale+offset, scale}, {-scale+offset, -scale+offset, scale}, {-scale+offset, -scale, scale}}, c});
+			triangles.push_back({{{-scale+offset, -scale, scale}, {-scale, -scale, scale}, {-scale, -scale+offset, scale}}, c});
+			glVertex3f(-scale, -scale+offset, scale);
+			glVertex3f(-scale+offset, -scale+offset, scale);
+			glVertex3f(-scale+offset, -scale, scale);
+			glVertex3f(-scale, -scale, scale);
+
+			SetFaceColor(-1, s);
+			glVertex3f(-scale, -scale+offset2, scale-epsilon);
+			glVertex3f(-scale+offset2, -scale+offset2, scale-epsilon);
+			glVertex3f(-scale+offset2, -scale, scale-epsilon);
+			glVertex3f(-scale, -scale, scale-epsilon);
+
+		} break;
+		case 8:
+		{
+			// Face 0 - cube 8
+			int c = GetFaceColor(6, s);
+			triangles.push_back({{{scale-offset, -scale, scale}, {scale-offset, -scale, scale-offset}, {scale, -scale, scale-offset}}, c});
+			triangles.push_back({{{scale, -scale, scale-offset}, {scale, -scale, scale}, {scale-offset, -scale, scale}}, c});
+			glVertex3f(scale-offset, -scale, scale);
+			glVertex3f(scale-offset, -scale, scale-offset);
+			glVertex3f(scale, -scale, scale-offset);
+			glVertex3f(scale, -scale, scale);
+
+			SetFaceColor(-1, s);
+			glVertex3f(scale-offset2, -scale+epsilon, scale);
+			glVertex3f(scale-offset2, -scale+epsilon, scale-offset2);
+			glVertex3f(scale, -scale+epsilon, scale-offset2);
+			glVertex3f(scale, -scale+epsilon, scale);
+
+			// Face 3 - cube 8
+			c = GetFaceColor(7, s);
+			triangles.push_back({{{scale, -scale+offset, scale}, {scale, -scale+offset, scale-offset}, {scale, -scale, scale-offset}}, c});
+			triangles.push_back({{{scale, -scale, scale-offset}, {scale, -scale, scale}, {scale, -scale+offset, scale}}, c});
+			glVertex3f(scale, -scale+offset, scale);
+			glVertex3f(scale, -scale+offset, scale-offset);
+			glVertex3f(scale, -scale, scale-offset);
+			glVertex3f(scale, -scale, scale);
+
+			SetFaceColor(-1, s);
+			glVertex3f(scale-epsilon, -scale+offset2, scale);
+			glVertex3f(scale-epsilon, -scale+offset2, scale-offset2);
+			glVertex3f(scale-epsilon, -scale, scale-offset2);
+			glVertex3f(scale-epsilon, -scale, scale);
+
+			
+			// Face 4 - cube 8
+			c = GetFaceColor(8, s);
+			triangles.push_back({{{scale, -scale+offset, scale}, {scale-offset, -scale+offset, scale}, {scale-offset, -scale, scale}}, c});
+			triangles.push_back({{{scale-offset, -scale, scale}, {scale, -scale, scale}, {scale, -scale+offset, scale}}, c});
+			glVertex3f(scale, -scale+offset, scale);
+			glVertex3f(scale-offset, -scale+offset, scale);
+			glVertex3f(scale-offset, -scale, scale);
+			glVertex3f(scale, -scale, scale);
+
+			SetFaceColor(-1, s);
+			glVertex3f(scale, -scale+offset2, scale-epsilon);
+			glVertex3f(scale-offset2, -scale+offset2, scale-epsilon);
+			glVertex3f(scale-offset2, -scale, scale-epsilon);
+			glVertex3f(scale, -scale, scale-epsilon);
+
+		} break;
+		case 18:
+		{
+			// Face 1 - cube 18
+			int c = GetFaceColor(14, s);
+			triangles.push_back({{{-scale+epsilon, scale-offset2, -scale}, {-scale, scale-offset, -scale+offset}, {-scale, scale, -scale+offset}}, c});
+			triangles.push_back({{{-scale, scale, -scale+offset}, {-scale, scale, -scale}, {-scale+epsilon, scale-offset2, -scale}}, c});
+			glVertex3f(-scale, scale-offset, -scale);
+			glVertex3f(-scale, scale-offset, -scale+offset);
+			glVertex3f(-scale, scale, -scale+offset);
+			glVertex3f(-scale, scale, -scale);
+
+			SetFaceColor(-1, s);
+			glVertex3f(-scale+epsilon, scale-offset2, -scale);
+			glVertex3f(-scale+epsilon, scale-offset2, -scale+offset2);
+			glVertex3f(-scale+epsilon, scale, -scale+offset2);
+			glVertex3f(-scale+epsilon, scale, -scale);
+
+			
+			// Face 2 - cube 18
+			c = GetFaceColor(13, s);
+			triangles.push_back({{{-scale, scale-offset, -scale}, {-scale+offset, scale-offset, -scale}, {-scale+offset, scale, -scale}}, c});
+			triangles.push_back({{{-scale+offset, scale, -scale}, {-scale, scale, -scale}, {-scale, scale-offset, -scale}}, c});
+			glVertex3f(-scale, scale-offset, -scale);
+			glVertex3f(-scale+offset, scale-offset, -scale);
+			glVertex3f(-scale+offset, scale, -scale);
+			glVertex3f(-scale, scale, -scale);
+
+			SetFaceColor(-1, s);
+			glVertex3f(-scale, scale-offset2, -scale+epsilon);
+			glVertex3f(-scale+offset2, scale-offset2, -scale+epsilon);
+			glVertex3f(-scale+offset2, scale, -scale+epsilon);
+			glVertex3f(-scale, scale, -scale+epsilon);
+
+			
+			// Face 5 - cube 18
+			c = GetFaceColor(12, s);
+			triangles.push_back({{{-scale, scale, -scale+offset}, {-scale, scale, -scale}, {-scale+offset, scale, -scale}}, c});
+			triangles.push_back({{{-scale+offset, scale, -scale}, {-scale+offset, scale, -scale+offset}, {-scale, scale, -scale+offset}}, c});
+			glVertex3f(-scale, scale, -scale+offset);
+			glVertex3f(-scale, scale, -scale);
+			glVertex3f(-scale+offset, scale, -scale);
+			glVertex3f(-scale+offset, scale, -scale+offset);
+
+			SetFaceColor(-1, s);
+			glVertex3f(-scale, scale-epsilon, -scale+offset2);
+			glVertex3f(-scale, scale-epsilon, -scale);
+			glVertex3f(-scale+offset2, scale-epsilon, -scale);
+			glVertex3f(-scale+offset2, scale-epsilon, -scale+offset2);
+
+		} break;
+		case 20:
+		{
+			// Face 2 - cube 20
+			int c = GetFaceColor(17, s);
+			triangles.push_back({{{scale, scale-offset, -scale}, {scale-offset, scale-offset, -scale}, {scale-offset, scale, -scale}}, c});
+			triangles.push_back({{{scale-offset, scale, -scale}, {scale, scale, -scale}, {scale, scale-offset, -scale}}, c});
+			glVertex3f(scale, scale-offset, -scale);
+			glVertex3f(scale-offset, scale-offset, -scale);
+			glVertex3f(scale-offset, scale, -scale);
+			glVertex3f(scale, scale, -scale);
+
+			SetFaceColor(-1, s);
+			glVertex3f(scale, scale-offset2, -scale+epsilon);
+			glVertex3f(scale-offset2, scale-offset2, -scale+epsilon);
+			glVertex3f(scale-offset2, scale, -scale+epsilon);
+			glVertex3f(scale, scale, -scale+epsilon);
+			
+			// Face 3 - cube 20
+			c = GetFaceColor(16, s);
+			triangles.push_back({{{scale, scale-offset, -scale}, {scale, scale-offset, -scale+offset}, {scale, scale, -scale+offset}}, c});
+			triangles.push_back({{{scale, scale, -scale+offset}, {scale, scale, -scale}, {scale, scale-offset, -scale}}, c});
+			glVertex3f(scale, scale-offset, -scale);
+			glVertex3f(scale, scale-offset, -scale+offset);
+			glVertex3f(scale, scale, -scale+offset);
+			glVertex3f(scale, scale, -scale);
+
+			SetFaceColor(-1, s);
+			glVertex3f(scale-epsilon, scale-offset2, -scale);
+			glVertex3f(scale-epsilon, scale-offset2, -scale+offset2);
+			glVertex3f(scale-epsilon, scale, -scale+offset2);
+			glVertex3f(scale-epsilon, scale, -scale);
+
+			// Face 5 - cube 20
+			c = GetFaceColor(15, s);
+			triangles.push_back({{{scale-offset, scale, -scale+offset}, {scale-offset, scale, -scale}, {scale, scale, -scale}}, c});
+			triangles.push_back({{{scale, scale, -scale}, {scale, scale, -scale+offset}, {scale-offset, scale, -scale+offset}}, c});
+			glVertex3f(scale-offset, scale, -scale+offset);
+			glVertex3f(scale-offset, scale, -scale);
+			glVertex3f(scale, scale, -scale);
+			glVertex3f(scale, scale, -scale+offset);
+	
+			SetFaceColor(-1, s);
+			glVertex3f(scale-offset2, scale-epsilon, -scale+offset2);
+			glVertex3f(scale-offset2, scale-epsilon, -scale);
+			glVertex3f(scale, scale-epsilon, -scale);
+			glVertex3f(scale, scale-epsilon, -scale+offset2);
+		} break;
+		case 24:
+		{
+			// Face 1 - cube 24
+			int c = GetFaceColor(22, s);
+			triangles.push_back({{{}, {}, {}}, c});
+			triangles.push_back({{{}, {}, {}}, c});
+			glVertex3f(-scale, scale-offset, scale);
+			glVertex3f(-scale, scale-offset, scale-offset);
+			glVertex3f(-scale, scale, scale-offset);
+			glVertex3f(-scale, scale, scale);
+
+			SetFaceColor(-1, s);
+			glVertex3f(-scale+epsilon, scale-offset2, scale);
+			glVertex3f(-scale+epsilon, scale-offset2, scale-offset2);
+			glVertex3f(-scale+epsilon, scale, scale-offset2);
+			glVertex3f(-scale+epsilon, scale, scale);
+
+			
+			// Face 4 - cube 24
+			c = GetFaceColor(23, s);
+			triangles.push_back({{{-scale, scale-offset, scale}, {-scale+offset, scale-offset, scale}, {-scale+offset, scale, scale}}, c});
+			triangles.push_back({{{-scale+offset, scale, scale}, {-scale, scale, scale}, {-scale, scale-offset, scale}}, c});
+			glVertex3f(-scale, scale-offset, scale);
+			glVertex3f(-scale+offset, scale-offset, scale);
+			glVertex3f(-scale+offset, scale, scale);
+			glVertex3f(-scale, scale, scale);
+
+			SetFaceColor(-1, s);
+			glVertex3f(-scale, scale-offset2, scale-epsilon);
+			glVertex3f(-scale+offset2, scale-offset2, scale-epsilon);
+			glVertex3f(-scale+offset2, scale, scale-epsilon);
+			glVertex3f(-scale, scale, scale-epsilon);
+
+			
+			// Face 5 - cube 24
+			c = GetFaceColor(21, s);
+			triangles.push_back({{{-scale, scale, scale}, {-scale, scale, scale-offset}, {-scale+offset, scale, scale-offset}}, c});
+			triangles.push_back({{{-scale+offset, scale, scale-offset}, {-scale+offset, scale, scale}, {-scale, scale, scale}}, c});
+			glVertex3f(-scale, scale, scale);
+			glVertex3f(-scale, scale, scale-offset);
+			glVertex3f(-scale+offset, scale, scale-offset);
+			glVertex3f(-scale+offset, scale, scale);
+
+			SetFaceColor(-1, s);
+			glVertex3f(-scale, scale-epsilon, scale);
+			glVertex3f(-scale, scale-epsilon, scale-offset2);
+			glVertex3f(-scale+offset2, scale-epsilon, scale-offset2);
+			glVertex3f(-scale+offset2, scale-epsilon, scale);
+		} break;
+		case 26:
+		{
+			// Face 3 - cube 26
+			int c = GetFaceColor(20, s);
+			triangles.push_back({{{scale, scale-offset, scale}, {scale, scale-offset, scale-offset}, {scale, scale, scale-offset}}, c});
+			triangles.push_back({{{scale, scale, scale-offset}, {scale, scale, scale}, {scale, scale-offset, scale}}, c});
+			glVertex3f(scale, scale-offset, scale);
+			glVertex3f(scale, scale-offset, scale-offset);
+			glVertex3f(scale, scale, scale-offset);
+			glVertex3f(scale, scale, scale);
+
+			SetFaceColor(-1, s);
+			glVertex3f(scale-epsilon, scale-offset2, scale);
+			glVertex3f(scale-epsilon, scale-offset2, scale-offset2);
+			glVertex3f(scale-epsilon, scale, scale-offset2);
+			glVertex3f(scale-epsilon, scale, scale);
+
+			
+			// Face 4 - cube 26
+			c = GetFaceColor(19, s);
+			triangles.push_back({{{scale, scale-offset, scale}, {scale-offset, scale-offset, scale}, {scale-offset, scale, scale}}, c});
+			triangles.push_back({{{scale-offset, scale, scale}, {scale, scale, scale}, {scale, scale-offset, scale}}, c});
+			glVertex3f(scale, scale-offset, scale);
+			glVertex3f(scale-offset, scale-offset, scale);
+			glVertex3f(scale-offset, scale, scale);
+			glVertex3f(scale, scale, scale);
+
+			SetFaceColor(-1, s);
+			glVertex3f(scale, scale-offset2, scale-epsilon);
+			glVertex3f(scale-offset2, scale-offset2, scale-epsilon);
+			glVertex3f(scale-offset2, scale, scale-epsilon);
+			glVertex3f(scale, scale, scale-epsilon);
+
+			
+			// Face 5 - cube 26
+			c = GetFaceColor(18, s);
+			triangles.push_back({{{scale-offset, scale, scale}, {scale-offset, scale, scale-offset}, {scale, scale, scale-offset}}, c});
+			triangles.push_back({{{scale, scale, scale-offset}, {scale, scale, scale}, {scale-offset, scale, scale}}, c});
+			glVertex3f(scale-offset, scale, scale);
+			glVertex3f(scale-offset, scale, scale-offset);
+			glVertex3f(scale, scale, scale-offset);
+			glVertex3f(scale, scale, scale);
+
+			SetFaceColor(-1, s);
+			glVertex3f(scale-offset2, scale-epsilon, scale);
+			glVertex3f(scale-offset2, scale-epsilon, scale-offset2);
+			glVertex3f(scale, scale-epsilon, scale-offset2);
+			glVertex3f(scale, scale-epsilon, scale);
+
+		} break;
+	}
+}
 void RubiksCorner::OpenGLDraw() const
 {
 	
@@ -1127,6 +1572,45 @@ void RubiksCorner::OpenGLDraw(const RubiksCornerState&, const RubiksCornersActio
 	
 }
 
+int RubiksCorner::GetFaceColor(int face, const RubiksCornerState &s) const
+{
+	int theColor = -1;
+	if (face == -1)
+	{
+		return theColor;
+	}
+
+	int cube = s.GetFaceInLoc(face);
+	switch (cube)
+	{
+		case 0: theColor = 0; break;
+		case 1: theColor = 1; break;
+		case 2: theColor = 2; break;
+		case 3: theColor = 0; break;
+		case 4: theColor = 2; break;
+		case 5: theColor = 3; break;
+		case 6: theColor = 0; break;
+		case 7: theColor = 3; break;
+		case 8: theColor = 4; break;
+		case 9: theColor = 0; break;
+		case 10: theColor = 4; break;
+		case 11: theColor = 1; break;
+		case 12: theColor = 5; break;
+		case 13: theColor = 2; break;
+		case 14: theColor = 1; break;
+		case 15: theColor = 5; break;
+		case 16: theColor = 3; break;
+		case 17: theColor = 2; break;
+		case 18: theColor = 5; break;
+		case 19: theColor = 4; break;
+		case 20: theColor = 3; break;
+		case 21: theColor = 5; break;
+		case 22: theColor = 1; break;
+		case 23: theColor = 4; break;
+		default: theColor = -1; break;
+	}
+	return theColor;
+}
 void RubiksCorner::SetFaceColor(int face, const RubiksCornerState &s) const
 {
 	int theColor = -1;

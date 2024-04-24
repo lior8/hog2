@@ -68,6 +68,8 @@ int main(int argc, char* argv[])
 	//TestEdgeRanking();
 	InstallHandlers();
 	RunHOGGUI(argc, argv, 600);
+	
+	return 0;
 }
 
 
@@ -175,65 +177,68 @@ void MyWindowHandler(unsigned long windowID, tWindowEventType eType)
 
 void MyFrameHandler(unsigned long windowID, unsigned int viewport, void *)
 {
-	bool endRecording = false;
-	if (viewport == 3)
-	{
-		c.OpenGLDrawEdgeDual(s);
-	}
-	else if (viewport == 2)
-	{
-		RubiksState tmp = s;
-		tmp.edge = RotateRubikEdgeClockwise(s.edge, 1);
-		c.OpenGLDrawEdges(tmp);
-	}
-	else if (viewport == 1)
-	{
-		c.OpenGLDrawCorners(s);
-	}
-	else {
-		static double tmp = 0;
-		glRotatef(25, 1, 0, 0);
-		glRotatef(-45+tmp, 0, 1, 0);
-		tmp += 1;
-		if (tmp > 360)
-			endRecording = true;
-		
-		if (pdb1 != 0)
-		{
-			pdb1->OpenGLDraw();
-		}
-		else if (animateActions.size() == 0)
-		{
-			c.OpenGLDraw(s);
-			
-		}
-		else {
-			static float t = 0.0;
-			RubiksState s2 = s;
-			c.ApplyAction(s2, animateActions.front());
-			c.OpenGLDraw(s, s2, t);
-			t+=0.02;
-			if (t >= 1)
-			{
-				s = s2;
-				animateActions.pop_front();
-				t = 0;
-			}
-			if (animateActions.size() == 0)
-				endRecording = true;
-		}
-	}
-	if (recording && viewport == GetNumPorts(windowID)-1)
-	{
-		static int cnt = 0;
-		char fname[255];
-		sprintf(fname, "/Users/nathanst/Movies/tmp/Rubik-%d%d%d%d", (cnt/1000)%10, (cnt/100)%10, (cnt/10)%10, cnt%10);
-		//SaveScreenshot(windowID, fname);
-		printf("Saved %s\n", fname);
-		cnt++;
-	}
-	if (endRecording)
-		recording = false;
+	auto &display = GetContext(windowID)->display;
+	c.Draw(display, s);
+	return;
+//	bool endRecording = false;
+//	if (viewport == 3)
+//	{
+//		c.OpenGLDrawEdgeDual(s);
+//	}
+//	else if (viewport == 2)
+//	{
+//		RubiksState tmp = s;
+//		tmp.edge = RotateRubikEdgeClockwise(s.edge, 1);
+//		c.OpenGLDrawEdges(tmp);
+//	}
+//	else if (viewport == 1)
+//	{
+//		c.OpenGLDrawCorners(s);
+//	}
+//	else {
+//		static double tmp = 0;
+//		glRotatef(25, 1, 0, 0);
+//		glRotatef(-45+tmp, 0, 1, 0);
+//		tmp += 1;
+//		if (tmp > 360)
+//			endRecording = true;
+//		
+//		if (pdb1 != 0)
+//		{
+//			pdb1->OpenGLDraw();
+//		}
+//		else if (animateActions.size() == 0)
+//		{
+//			c.OpenGLDraw(s);
+//			
+//		}
+//		else {
+//			static float t = 0.0;
+//			RubiksState s2 = s;
+//			c.ApplyAction(s2, animateActions.front());
+//			c.OpenGLDraw(s, s2, t);
+//			t+=0.02;
+//			if (t >= 1)
+//			{
+//				s = s2;
+//				animateActions.pop_front();
+//				t = 0;
+//			}
+//			if (animateActions.size() == 0)
+//				endRecording = true;
+//		}
+//	}
+//	if (recording && viewport == GetNumPorts(windowID)-1)
+//	{
+//		static int cnt = 0;
+//		char fname[255];
+//		sprintf(fname, "/Users/nathanst/Movies/tmp/Rubik-%d%d%d%d", (cnt/1000)%10, (cnt/100)%10, (cnt/10)%10, cnt%10);
+//		//SaveScreenshot(windowID, fname);
+//		printf("Saved %s\n", fname);
+//		cnt++;
+//	}
+//	if (endRecording)
+//		recording = false;
 }
 
 void RunTest(int billionEntriesToLoad);

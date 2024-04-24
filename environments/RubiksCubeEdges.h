@@ -181,6 +181,9 @@ public:
 	virtual uint64_t GetActionHash(RubikEdgeAction act) const { return 0; }
 	virtual void GetStateFromHash(uint64_t hash, RubikEdgeState &node) const;
 	
+	virtual void Draw(Graphics::Display &display, const RubikEdgeState &s) const;
+
+	
 	virtual void OpenGLDraw() const;
 	virtual void OpenGLDraw(const RubikEdgeState&) const;
 	/** Draw the transition at some percentage 0...1 between two states */

@@ -97,6 +97,13 @@ struct point {
 	}
 };
 
+struct triangle {
+	triangle() {}
+	triangle(point p1, point p2, point p3)
+	:p1(p1), p2(p2), p3(p3) {}
+	point p1, p2, p3;
+};
+
 struct rect {
 	rect() {}
 	rect(point center, float rad) : left(center.x-rad), top(center.y-rad), right(center.x+rad), bottom(center.y+rad) {}
@@ -175,6 +182,7 @@ public:
 	void FrameCircle(point r, float radius, rgbColor c, float lineWidth); // FIXME: Should be a point and a radius!
 	void FillCircle(rect r, rgbColor c);
 	void FillCircle(point p, float radius, rgbColor c);
+	void FillTriangle(const triangle &t, rgbColor c);
 	void FillTriangle(point p1, point p2, point p3, rgbColor c);
 	void FrameTriangle(point p1, point p2, point p3, float lineWidth, rgbColor c);
 

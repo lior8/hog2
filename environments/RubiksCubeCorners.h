@@ -176,19 +176,32 @@ public:
 	void GetStateFromHash(uint64_t hash, RubiksCornerState &node) const;
 	virtual uint64_t GetActionHash(RubiksCornersAction act) const { return 0; }
 	
+	virtual void Draw(Graphics::Display &display, const RubiksCornerState &s) const;
+	
 	virtual void OpenGLDraw() const;
 	virtual void OpenGLDraw(const RubiksCornerState&) const;
 	/** Draw the transition at some percentage 0...1 between two states */
 	virtual void OpenGLDraw(const RubiksCornerState&, const RubiksCornerState&, float) const;
 	virtual void OpenGLDraw(const RubiksCornerState&, const RubiksCornersAction&) const;
 	void OpenGLDrawCube(const RubiksCornerState &s, int cube) const;
-
+	
 private:
+	void GetTriangles(const RubiksCornerState &s, int cube) const;
+	int GetFaceColor(int face, const RubiksCornerState&) const;
 	void SetFaceColor(int face, const RubiksCornerState&) const;
 	//	void SetFaceColor(int face, const RubiksCornerState&) const;
 	static uint64_t MRRank(int n, uint64_t perm, uint64_t dual);
 	static void MRUnrank2(int n, uint64_t r, uint64_t &perm);
 	RubikCornerMove moves[18];
+	
+public:
+	// local triangle cache
+	struct triangleColor {
+		Graphics::triangle t;
+		int color;
+	};
+private:
+	mutable std::vector<triangleColor> triangles;
 };
 
 class RubikCornerPDB : public PDBHeuristic<RubiksCornerState, RubiksCornersAction, RubiksCorner, RubiksCornerState, 4> {
