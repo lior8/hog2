@@ -1086,8 +1086,8 @@ void RubiksCorner::GetTriangles(const RubiksCornerState &s, int cube) const
 		{
 			// Face 1 - cube 24
 			int c = GetFaceColor(22, s);
-			triangles.push_back({{{}, {}, {}}, c});
-			triangles.push_back({{{}, {}, {}}, c});
+			triangles.push_back({{{-scale, scale-offset, scale}, {-scale, scale-offset, scale-offset}, {-scale, scale, scale-offset}}, c});
+			triangles.push_back({{{-scale, scale, scale-offset}, {-scale, scale, scale}, {-scale, scale-offset, scale}}, c});
 			glVertex3f(-scale, scale-offset, scale);
 			glVertex3f(-scale, scale-offset, scale-offset);
 			glVertex3f(-scale, scale, scale-offset);
