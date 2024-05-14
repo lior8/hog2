@@ -145,6 +145,15 @@ void Display::FillCircle(point p, float radius, rgbColor c)
 		drawCommands.push_back({i, kFillOval, currViewport});
 }
 
+void Display::FillTriangle(const triangle &t, rgbColor c)
+{
+	triangleInfo i = {t.p1, t.p2, t.p3, c, 0};
+	if (drawingBackground)
+		backgroundDrawCommands.push_back({i, kFillTriangle, currViewport});
+	else
+		drawCommands.push_back({i, kFillTriangle, currViewport});
+}
+
 void Display::FillTriangle(point p1, point p2, point p3, rgbColor c)
 {
 	triangleInfo i = {p1, p2, p3, c, 0};

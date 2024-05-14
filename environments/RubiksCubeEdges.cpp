@@ -831,6 +831,11 @@ void RubikEdge::MRUnrank2(int n, uint64_t r, uint64_t &perm)
 //		node.SetCubeInLoc(x, puzzle[x]);
 //}
 
+void RubikEdge::Draw(Graphics::Display &display, const RubikEdgeState &s) const
+{
+	
+}
+
 void RubikEdge::OpenGLDraw() const
 {
 	

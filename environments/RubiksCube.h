@@ -172,6 +172,12 @@ public:
 //	FourBitArray &GetEdgePDB() { return edgePDB; }
 	//FourBitArray &GetEdge7PDB(bool min) { if (min) return edge7PDBmin; return edge7PDBint; }
 
+	virtual void Draw(Graphics::Display &display, const RubiksState &s) const
+	{ 
+		c.Draw(display, s.corner);
+		e.Draw(display, s.edge);
+	}
+
 	virtual void OpenGLDraw() const;
 	virtual void OpenGLDraw(const RubiksState&) const;
 	virtual void OpenGLDrawCorners(const RubiksState&) const;
