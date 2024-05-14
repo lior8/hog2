@@ -1946,9 +1946,17 @@ void Witness<width, height>::GetLeftRightRegions(const WitnessState<width, heigh
     lhs.clear();
     rhs.clear();
     auto [x0, y0] = path[0];
+    auto checkStart = true;
     for (auto i = 1; i < path.size(); ++i)
     {
         auto [x1, y1] = path[i];
+        if (!(x0 == 0 || x0 == width || y0 == 0 || y0 == height) && checkStart)
+        {
+            x0 = x1;
+            y0 = y1;
+            continue;
+        }
+        checkStart = false;
         assert(!(x1 == x0 + 1 && y1 == y0 + 1));
         if (x1 == x0 + 1) // right
         {
@@ -2535,8 +2543,8 @@ bool Witness<width, height>::PathTest(const WitnessState<width, height> &node) c
 {
     if (node.path.size() <= 1)
         return true;
-    const auto &head = node.path.back();
-    if (std::find(goal.cbegin(), goal.cend(), head) != goal.cend() ||
+    if (const auto &head = node.path.back();
+        std::find(goal.cbegin(), goal.cend(), head) != goal.cend() ||
         goalMap[GetPathIndex(head.first, head.second)] != 0)
         return true;
     LabelRegions(node);
