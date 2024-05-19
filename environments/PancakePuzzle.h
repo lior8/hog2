@@ -157,7 +157,7 @@ public:
 	void SetUseRealValueEdges(bool use) { real = use; }
 	bool pruneActions;
 private:
-	bool real;
+	bool real = false;
 	std::vector<PancakePuzzleAction> operators;
 	mutable std::vector<PancakePuzzleAction> actCache;
 	bool goal_stored; // whether a goal is stored or not
