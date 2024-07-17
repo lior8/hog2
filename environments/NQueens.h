@@ -49,6 +49,10 @@ static std::ostream &operator<<(std::ostream &out, const NQueenAction &a)
 	return out;
 }
 
+static bool operator==(const NQueenAction &l1, const NQueenAction &l2)
+{
+	return l1.loc == l2.loc && l1.value == l2.value;
+}
 class NQueens : public SearchEnvironment<NQueenState, NQueenAction>
 {
 public:

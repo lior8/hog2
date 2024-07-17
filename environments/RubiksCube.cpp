@@ -39,6 +39,10 @@ void RubiksCube::GetPrunedActions(const RubiksState &nodeID, RubiksAction lastAc
 	}
 }
 
+void RubiksCube::GetActions(const RubiksState &nodeID, std::vector<RubiksAction> &actions, const RubiksAction &lastAction) const
+{
+	GetPrunedActions(nodeID, lastAction, actions);
+}
 
 void RubiksCube::GetActions(const RubiksState &nodeID, std::vector<RubiksAction> &actions) const
 {

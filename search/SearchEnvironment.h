@@ -32,6 +32,8 @@ public:
 	virtual ~SearchEnvironment() {}
 	virtual void GetSuccessors(const state &nodeID, std::vector<state> &neighbors) const = 0;
 	virtual void GetActions(const state &nodeID, std::vector<action> &actions) const = 0;
+	virtual void GetSuccessors(const state &nodeID, std::vector<state> &neighbors, const state &parent) const;
+	virtual void GetActions(const state &nodeID, std::vector<action> &actions, const action &lastAction) const;
 	virtual int GetNumSuccessors(const state &stateID) const
 	{ std::vector<state> neighbors; GetSuccessors(stateID, neighbors); return (int)neighbors.size(); }
 
@@ -174,5 +176,39 @@ void SearchEnvironment<state,action>::GLDrawPath(const std::vector<state> &path)
 		GLDrawLine(path[x], path[x+1]);
 	}
 }
+
+template <class state, class action>
+void SearchEnvironment<state,action>::GetSuccessors(const state &nodeID, std::vector<state> &neighbors, const state &parent) const
+{
+	GetSuccessors(nodeID, neighbors);
+	for (int x = 0; x < neighbors.size(); x++)
+	{
+		if (neighbors[x] == parent)
+		{
+			neighbors.erase(neighbors.begin()+x);
+			x--;
+		}
+	}
+}
+
+template <class state, class action>
+void SearchEnvironment<state,action>::GetActions(const state &nodeID, std::vector<action> &actions, const action &lastAction) const
+{
+	action a;
+	bool success = InvertAction(a);
+	GetActions(nodeID, actions);
+	if (success)
+	{
+		for (int x = 0; x < actions.size(); x++)
+		{
+			if (actions[x] == lastAction)
+			{
+				actions.erase(actions.begin()+x);
+				x--;
+			}
+		}
+	}
+}
+
 
 #endif

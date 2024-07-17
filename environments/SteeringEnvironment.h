@@ -42,6 +42,12 @@ public:
 	float dv, dh;
 };
 
+static bool operator==(const steeringAction &l1, const steeringAction &l2)
+{
+	return ((fequal(l1.dv, l2.dv)) &&
+			(fequal(l1.dh, l2.dh)));
+}
+
 extern float maxSpeed;
 extern float worldRadius;
 

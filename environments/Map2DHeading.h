@@ -42,7 +42,12 @@ struct xyhAct {
 	uint8_t oldHeading;
 	uint8_t newHeading;
 };
-	
+
+static bool operator==(const xyhAct &l1, const xyhAct &l2)
+{
+	return (l1.oldHeading == l2.oldHeading) && (l1.newHeading == l2.newHeading);
+}
+
 class Map2DHeading : public SearchEnvironment<xyhLoc, xyhAct>
 {
 public:

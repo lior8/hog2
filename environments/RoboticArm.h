@@ -93,7 +93,7 @@ public:
 	virtual ~RoboticArm();
 
 	double GetTolerance() const { return tolerance; }
-	void GetTipPosition( armAngles &s, double &x, double &y );
+	void GetTipPosition(const armAngles &s, double &x, double &y ) const;
 	int TipPositionIndex(armAngles &s,
 						 const double minX=-1, const double minY=-1,
 						 const double width=2 );
@@ -133,6 +133,7 @@ public:
 //	virtual void OpenGLDraw(const armAngles &l, GLfloat r, GLfloat g, GLfloat b) const;
 	virtual void Draw(Graphics::Display &display) const;
 	virtual void Draw(Graphics::Display &display, const armAngles&) const;
+	virtual void Draw(Graphics::Display &display, const armAngles&, int which, rgbColor c) const;
 	virtual void Draw(Graphics::Display &display, const armAngles &, const armRotations &) const;
 	
 	virtual void GetNextState(const armAngles &currents, armRotations dir, armAngles &news) const;
@@ -148,6 +149,7 @@ public:
 		exit(0); return false;}
 
 private:
+	bool LegalAction(const armAngles &a, double tipx, double tipy) const;
 	void DrawLine(line2d l) const;
 	void GenerateLineSegments(const armAngles &a, std::vector<line2d> &armSegments) const;
 

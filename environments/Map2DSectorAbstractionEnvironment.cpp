@@ -13,6 +13,11 @@ bool operator==(const abstractGridState &s1, const abstractGridState &s2)
 	return s1.sector == s2.sector && s1.region == s2.region;
 }
 
+bool operator==(const abstractMove &a1, const abstractMove &a2)
+{
+	return a1.direction == a2.direction && a1.region == a2.region;
+}
+
 Map2DSectorAbstraction::Map2DSectorAbstraction(Map *m, int sectorSize)
 {
 	map = m;

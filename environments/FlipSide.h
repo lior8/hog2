@@ -63,6 +63,11 @@ static bool operator==(const FlipSideState &l1, const FlipSideState &l2)
 	return true;
 }
 
+static bool operator==(const flipMove &l1, const flipMove &l2)
+{
+	return l1.top == l2.top && l1.bottom == l2.bottom;
+}
+
 class FlipSide : public SearchEnvironment<FlipSideState, flipMove> {
 public:
 	FlipSide(int width = 5);

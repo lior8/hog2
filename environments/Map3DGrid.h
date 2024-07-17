@@ -197,6 +197,13 @@ public:
 	uint8_t destSector;
 };
 
+static bool operator==(const action3d &l1, const action3d &l2)
+{
+	return ((l1.direction == l2.direction) &&
+			(l1.destRegion == l2.destRegion) &&
+			(l1.destSector == l2.destSector));
+}
+
 class Map3DGrid : public SearchEnvironment<state3d, action3d> {
 public:
 	Map3DGrid(int width, int height, int theSectorSize);

@@ -25,6 +25,7 @@ struct abstractMove {
 };
 
 bool operator==(const abstractGridState &, const abstractGridState &);
+bool operator==(const abstractMove &, const abstractMove &);
 
 class Map2DSectorAbstraction : public SearchEnvironment<abstractGridState, abstractMove>  {
 public:
