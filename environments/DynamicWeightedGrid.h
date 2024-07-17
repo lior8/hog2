@@ -47,7 +47,13 @@ namespace DWG {
 		int sectorFrom, regionFrom;
 		int sectorTo, regionTo;
 	};
-	
+
+static bool operator==(const edge &s1, const edge &s2)
+{
+	return s1.sectorFrom == s2.sectorFrom && s2.regionFrom == s1.regionFrom &&
+	s1.sectorTo == s2.sectorTo && s2.regionTo == s1.regionTo;
+}
+
 	const uint8_t kNoRegion = 0xFF;
 	
 	struct regionData {
