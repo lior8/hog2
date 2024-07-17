@@ -161,6 +161,11 @@ public:
 	recVec end;
 };
 
+static bool operator==(const line2d &l1, const line2d &l2)
+{
+	return l1.start == l2.start && l1.end == l2.end;
+}
+
 
 /** Draw a pyramid with the tip at the given location, given height, and 
 * width from center to edge as width.
