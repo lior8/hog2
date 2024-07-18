@@ -194,14 +194,14 @@ void SearchEnvironment<state,action>::GetSuccessors(const state &nodeID, std::ve
 template <class state, class action>
 void SearchEnvironment<state,action>::GetActions(const state &nodeID, std::vector<action> &actions, const action &lastAction) const
 {
-	action a;
+	action a = lastAction;
 	bool success = InvertAction(a);
 	GetActions(nodeID, actions);
 	if (success)
 	{
 		for (int x = 0; x < actions.size(); x++)
 		{
-			if (actions[x] == lastAction)
+			if (actions[x] == a)
 			{
 				actions.erase(actions.begin()+x);
 				x--;
