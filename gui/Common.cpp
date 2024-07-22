@@ -313,7 +313,7 @@ bool HandleMouse(pRecContext pContextInfo, int xWindow, int yWindow, point3d whe
 /* New low-end mouse handler. Does the viewport computation - just requires incoming global HOG coordinates. */
 bool HandleMouse(pRecContext pContextInfo, point3d where, tButtonType button, tMouseEventType mouse)
 {
-	for (int x = pContextInfo->display.numViewports; x >= 0; x--)
+	for (int x = pContextInfo->display.numViewports-1; x >= 0; x--)
 		//for (int x = MAXPORTS-1; x >= 0; x--)
 	{
 //		if (!pContextInfo->viewports[x].active)
