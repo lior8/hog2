@@ -15,6 +15,7 @@
 #include <cstdlib>
 #include "vectorCache.h"
 #include <sstream>
+#include <climits>
 
 using namespace std;
 
