@@ -19,6 +19,8 @@
 #include <filesystem>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <climits>
+
 //#include "matplotlibcpp.h"
 //namespace plt = matplotlibcpp;
 
