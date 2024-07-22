@@ -10,20 +10,15 @@
 #include <ctype.h>
 #include <string>
 #include <map>
-#include<cmath>
+#include <cmath>
 #include <thread>
 #include <cstdlib>
-//#include "pbPlots.hpp"
-//#include "supportLib.hpp"
 #include "vectorCache.h"
 #include <sstream>
 
 using namespace std;
 
 #include "SVGUtil.h"
-//#include <boost/serialization/map.hpp>
-//#include <boost/serialization/set.hpp>
-//#include <fstream>
 
 #pragma mark -
 #pragma mark Efficient Hexagon Search Code
