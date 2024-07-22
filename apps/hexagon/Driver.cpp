@@ -27,11 +27,12 @@
 using namespace std;
 
 // CONTROL PANEL
-string outputPath = "/Users/yazeedsabil/Desktop/Temp"; // make sure the folder exists
+string outputPath = ".";///"Users/yazeedsabil/Desktop/Temp"; // make sure the folder exists
 int numberOfSolutionCutoff = INT_MAX, maxPuzzlesPerCat = 3000;//673;//INT_MAX
 bool recording = false, svg = true, dotted = true, doColorSets = true;
 bool practiceMode = false; int addedPieces = 2;//true
 
+void GenerateCurriculum();
 
 bool saveAndExit = false;
 string filename, outputFile;
@@ -47,6 +48,8 @@ long expansionsGlob = 0;//, generetions = 0, leaves = 0;
 
 int main(int argc, char* argv[])
 {
+	for (int x = 0; x < argc; x++)
+		printf("%s ", argv[x]);
 	setvbuf(stdout, NULL, _IONBF, 0);
 	InstallHandlers();
 	RunHOGGUI(argc, argv, 512, 1024);
@@ -66,17 +69,18 @@ void InstallHandlers()
 	InstallKeyboardHandler(MyDisplayHandler, "All", "Get All Goals", kAnyModifier, 'a');
 	InstallKeyboardHandler(MyDisplayHandler, "Flip", "Flip Board", kAnyModifier, 'f');
 	InstallKeyboardHandler(MyDisplayHandler, "Rotate", "Rotate Board", kAnyModifier, 'r');
-    InstallKeyboardHandler(MyDisplayHandler, "Analyze1", "Build curriculum", kAnyModifier, 'm');
-    InstallKeyboardHandler(MyDisplayHandler, "Search", "Constraint space search", kAnyModifier, 'c');
+	InstallKeyboardHandler(MyDisplayHandler, "Analyze1", "Build curriculum", kAnyModifier, 'm');
+	InstallKeyboardHandler(MyDisplayHandler, "Search", "Constraint space search", kAnyModifier, 'c');
 	InstallKeyboardHandler(MyDisplayHandler, "Analyze2", "Analyze which pieces to make unflippable", kAnyModifier, 'o');
 	InstallKeyboardHandler(MyDisplayHandler, "Get Coordinates", "Get baseline coordinates of all pieces", kAnyModifier, '=');
-
 	
+	
+	InstallCommandLineHandler(MyCLHandler, "-generateCurriculum", "-generateCurriculum <location>", "Generate curriculum and store in the provided location");
 	InstallCommandLineHandler(MyCLHandler, "-loadPuzzle", "-loadPuzzle <file>", "Load level from file.");
-    InstallCommandLineHandler(MyCLHandler, "-loadSolution", "-loadSolution <file>", "Load solution from file.");
-    InstallCommandLineHandler(MyCLHandler, "-comparePuzzles", "-comparePuzzles <directory>", "Load all files from directory and compare them to generated goals.");
+	InstallCommandLineHandler(MyCLHandler, "-loadSolution", "-loadSolution <file>", "Load solution from file.");
+	InstallCommandLineHandler(MyCLHandler, "-comparePuzzles", "-comparePuzzles <directory>", "Load all files from directory and compare them to generated goals.");
 	InstallCommandLineHandler(MyCLHandler, "-svg", "-svg <file>", "Write SVG to file. Also requires that a file is loaded.");
-
+	
 //	InstallWindowHandler(MyWindowHandler);
 //	InstallMouseClickHandler(MyClickHandler);
 }
@@ -214,6 +218,15 @@ void CheckDuplicateGoals()
 
 int MyCLHandler(char *argument[], int maxNumArgs)
 {
+	if (strcmp(argument[0], "-generateCurriculum") == 0)
+	{
+		if (maxNumArgs > 1)
+		{
+			outputPath = argument[1];
+		}
+		GenerateCurriculum();
+		exit(0);
+	}
 	if (strcmp(argument[0], "-loadSolution") == 0)
 	{
 		if (maxNumArgs > 1)
@@ -555,7 +568,8 @@ void GenerateCurriculum()
     
     mkdir((outputPath + "/gen_puzzles/").c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     
-    for (int i = 0; i < categories; i++) {
+    for (int i = 0; i < categories; i++)
+	{
         mkdir((outputPath + "/gen_puzzles/"+to_string(i)).c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
         
         vector<int> solCounts(goals.size());
@@ -577,7 +591,7 @@ void GenerateCurriculum()
             h.Draw(d);
             h.Draw(d, hs);
             
-            if(svg)
+            if (svg)
                 MakeSVG(d, fileName.c_str(), 1024, 1024);
         }
     }
