@@ -9,6 +9,7 @@
 #ifndef hog2_glut_ParallelIDA_h
 #define hog2_glut_ParallelIDA_h
 
+#include <cinttypes>
 #include <iostream>
 #include "SearchEnvironment.h"
 #include <unordered_map>
