@@ -33,7 +33,7 @@ enum PDBLookupType {
 };
 
 const int coarseSize = 1024;
-const int maxThreads = 32; // TODO: This isn't enforced in a static assert
+const int maxThreads = 64; // TODO: This isn't enforced in a static assert
 
 template <class abstractState, class abstractAction, class abstractEnvironment, class state = abstractState, uint64_t pdbBits = 8>
 class PDBHeuristic : public Heuristic<state> {
@@ -79,12 +79,12 @@ public:
 	/** This methods randomizes the entries in the PDB. Only useful for testing purposes. (eg to test structure in compression) */
 	void ShuffleValues();
 	void BuildPDB(const state &goal);
-	void BuildPDB(const state &goal, int numThreads)
-	{ BuildPDBForwardBackward(goal, numThreads); }
+	void BuildPDB(const state &goal, int numThreads, bool verbose = true)
+	{ BuildPDBForwardBackward(goal, numThreads, verbose); }
 	void BuildPDBForward(const state &goal, int numThreads, bool useCoarseOpen = true, bool verbose = false);
 	void BuildPDBForward(const std::vector<state> &goal, int numThreads, bool useCoarseOpen = true, bool verbose = false);
 	void BuildPDBBackward(const state &goal, int numThreads);
-	void BuildPDBForwardBackward(const state &goal, int numThreads);
+	void BuildPDBForwardBackward(const state &goal, int numThreads, bool verbose = true);
 
 	void BuildAdditivePDB(const state &goal, int numThreads, bool useCourseOpen = true);
 
@@ -463,7 +463,7 @@ void PDBHeuristic<abstractState, abstractAction, abstractEnvironment, state, pdb
 }
 
 template <class abstractState, class abstractAction, class abstractEnvironment, class state, uint64_t pdbBits>
-void PDBHeuristic<abstractState, abstractAction, abstractEnvironment, state, pdbBits>::BuildPDBForwardBackward(const state &goal, int numThreads)
+void PDBHeuristic<abstractState, abstractAction, abstractEnvironment, state, pdbBits>::BuildPDBForwardBackward(const state &goal, int numThreads, bool verbose)
 {
 	assert(goalSet);
 	SharedQueue<std::pair<uint64_t, uint64_t> > workQueue(numThreads*20);
@@ -481,11 +481,13 @@ void PDBHeuristic<abstractState, abstractAction, abstractEnvironment, state, pdb
 	std::vector<bool> coarseOpenNext((COUNT+coarseSize-1)/coarseSize);
 	
 	uint64_t entries = goalState.size();
+	if (verbose)
+	{
 	std::cout << "Num Entries: " << COUNT << std::endl;
 	std::cout << "Goal State: " << goalState[0] << std::endl;
 	//std::cout << "State Hash of Goal: " << GetStateHash(goal) << std::endl;
 	std::cout << "PDB Hash of Goal: " << GetPDBHash(goalState[0]) << std::endl;
-	
+	}
 	std::deque<state> q_curr, q_next;
 	std::vector<state> children;
 	std::vector<uint64_t> distribution;
@@ -504,6 +506,7 @@ void PDBHeuristic<abstractState, abstractAction, abstractEnvironment, state, pdb
 	int depth = 0;
 	bool searchForward = true;
 	std::vector<std::thread*> threads(numThreads);
+	if (verbose)
 	printf("Creating %d threads\n", numThreads);
 	do {
 		Timer s;
@@ -558,6 +561,7 @@ void PDBHeuristic<abstractState, abstractAction, abstractEnvironment, state, pdb
 		}
 		entries += total;//newEntries;
 		distribution.push_back(total);
+		if (verbose)
 		printf("Depth %d complete; %1.2fs elapsed. %" PRId64 " new states written; %" PRId64 " of %" PRId64 " total [%s]\n",
 			   depth, s.EndTimer(), total, entries, COUNT, searchForward?"forward":"backward");
 		if (double(total)*double(total)*0.4 > double(COUNT-entries)*double(distribution[distribution.size()-2]))// || depth == 8)
@@ -567,14 +571,16 @@ void PDBHeuristic<abstractState, abstractAction, abstractEnvironment, state, pdb
 		depth++;
 		coarseOpenCurr.swap(coarseOpenNext);
 	} while (entries != COUNT);
-	
+	if (verbose)
 	printf("%1.2fs elapsed\n", t.EndTimer());
 	if (entries != COUNT)
 	{
+		if (verbose)
 		printf("Entries: %" PRId64 "; count: %" PRId64 "\n", entries, COUNT);
 		assert(entries == COUNT);
 	}
-	PrintHistogram();
+	if (verbose)
+		PrintHistogram();
 }
 
 
