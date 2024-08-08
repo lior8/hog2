@@ -582,7 +582,11 @@ void Dispatch(string alg, int seed, float weight, bool multiple = true, int cand
     GenerateRandomEnds<numOfDisks>(start, goal, seed);
     GroupHeuristic<TOHState<numOfDisks>> gh;
 	gh.weight = weight;
+    Timer t;
+    t.StartTimer();
     BuildHeuristic<numOfDisks, pdb1Disks, pdb2Disks>(start, goal, gh, multiple);
+    t.EndTimer();
+    cout << "pdb: " << t.GetElapsedTime() << endl;
     IterativeHeuristicTOHTest<numOfDisks>(start, goal, alg, -1, gh, candidates);
 }
 
