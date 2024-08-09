@@ -206,6 +206,14 @@ public:
     VideoMode(unsigned int modeWidth, unsigned int modeHeight, unsigned int modeBitsPerPixel = 32);
 };
 	
+
+class SFML_WINDOW_API WindowBase
+{
+public:
+bool isOpen() const;
+bool pollEvent(Event& event);
+};
+  
 class SFML_WINDOW_API Window : GlResource, NonCopyable
 {
 public:
