@@ -254,8 +254,8 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "319"
             endingLineNumber = "319"
-            landmarkName = "DoSingleSearchStep(thePath)"
-            landmarkType = "9">
+            landmarkName = "unknown"
+            landmarkType = "0">
             <Locations>
                <Location
                   uuid = "074DD4F5-16C0-4C3D-A29E-77CEF058C90B - b058dcd99759ae0c"
@@ -514,91 +514,76 @@
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
             uuid = "9FC6AD24-A58F-4F5E-BD3F-595727F45797"
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "../../../utils/Graphics.cpp"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "481"
-            endingLineNumber = "481"
+            startingLineNumber = "494"
+            endingLineNumber = "494"
             landmarkName = "Graphics::Display::ViewportToGlobalHOG(v, where, wWidth, wHeight)"
             landmarkType = "7">
             <Locations>
                <Location
-                  uuid = "9FC6AD24-A58F-4F5E-BD3F-595727F45797 - 5cf289d121876f54"
+                  uuid = "9FC6AD24-A58F-4F5E-BD3F-595727F45797 - 38bb55b92ee369cb"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
                   symbolName = "Graphics::Display::ViewportToGlobalHOG(Graphics::viewport const&amp;, Graphics::point, int, int) const"
-                  moduleName = "Snakebird"
+                  moduleName = "Hexagon"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/nathanst/Documents/GitHub/hog2/utils/Graphics.cpp"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "481"
-                  endingLineNumber = "481"
-                  offsetFromSymbolStart = "224">
-               </Location>
-               <Location
-                  uuid = "9FC6AD24-A58F-4F5E-BD3F-595727F45797 - 5cf289d121876f54"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "Graphics::Display::ViewportToGlobalHOG(Graphics::viewport const&amp;, Graphics::point, int, int) const"
-                  moduleName = "Snakebird"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/nathanst/Documents/GitHub/hog2/utils/Graphics.cpp"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "481"
-                  endingLineNumber = "481"
-                  offsetFromSymbolStart = "728">
-               </Location>
-               <Location
-                  uuid = "9FC6AD24-A58F-4F5E-BD3F-595727F45797 - c583f050809bd0d5"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "Graphics::Display::ViewportToGlobalHOG(Graphics::viewport const&amp;, Graphics::point, int, int) const"
-                  moduleName = "Robotic Arm"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/nathanst/Documents/GitHub/hog2/utils/Graphics.cpp"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "481"
-                  endingLineNumber = "481"
-                  offsetFromSymbolStart = "224">
-               </Location>
-               <Location
-                  uuid = "9FC6AD24-A58F-4F5E-BD3F-595727F45797 - c583f050809bd0d5"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "Graphics::Display::ViewportToGlobalHOG(Graphics::viewport const&amp;, Graphics::point, int, int) const"
-                  moduleName = "Robotic Arm"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/nathanst/Documents/GitHub/hog2/utils/Graphics.cpp"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "481"
-                  endingLineNumber = "481"
-                  offsetFromSymbolStart = "728">
-               </Location>
-               <Location
-                  uuid = "9FC6AD24-A58F-4F5E-BD3F-595727F45797 - 5cf289d121876f54"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "Graphics::Display::ViewportToGlobalHOG(Graphics::viewport const&amp;, Graphics::point, int, int) const"
-                  moduleName = "Snakebird"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/nathanst/Documents/GitHub/hog2/utils/Graphics.cpp"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "481"
-                  endingLineNumber = "481"
+                  startingLineNumber = "499"
+                  endingLineNumber = "499"
                   offsetFromSymbolStart = "228">
+               </Location>
+               <Location
+                  uuid = "9FC6AD24-A58F-4F5E-BD3F-595727F45797 - 38bb55b92ee36954"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Graphics::Display::ViewportToGlobalHOG(Graphics::viewport const&amp;, Graphics::point, int, int) const"
+                  moduleName = "Hexagon"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/nathanst/Documents/GitHub/hog2/utils/Graphics.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "502"
+                  endingLineNumber = "502"
+                  offsetFromSymbolStart = "228">
+               </Location>
+               <Location
+                  uuid = "9FC6AD24-A58F-4F5E-BD3F-595727F45797 - 38bb55b92ee36eb7"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Graphics::Display::ViewportToGlobalHOG(Graphics::viewport const&amp;, Graphics::point, int, int) const"
+                  moduleName = "Hexagon"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/nathanst/Documents/GitHub/hog2/utils/Graphics.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "503"
+                  endingLineNumber = "503"
+                  offsetFromSymbolStart = "228">
+               </Location>
+               <Location
+                  uuid = "9FC6AD24-A58F-4F5E-BD3F-595727F45797 - 3939c275fabd474d"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Graphics::Display::ViewportToGlobalHOG(Graphics::viewport const&amp;, Graphics::point, int, int) const"
+                  moduleName = "Example"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/nathanst/Documents/GitHub/hog2/utils/Graphics.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "495"
+                  endingLineNumber = "495"
+                  offsetFromSymbolStart = "540">
                </Location>
             </Locations>
          </BreakpointContent>
@@ -607,91 +592,61 @@
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
             uuid = "6CF11B23-FB3C-464F-9A43-CC136D990996"
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "../../../utils/Graphics.cpp"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "434"
-            endingLineNumber = "434"
+            startingLineNumber = "447"
+            endingLineNumber = "447"
             landmarkName = "Graphics::Display::GlobalHOGToViewport(v, where, width, height)"
             landmarkType = "7">
             <Locations>
                <Location
-                  uuid = "6CF11B23-FB3C-464F-9A43-CC136D990996 - d84fd0f3e5266854"
+                  uuid = "6CF11B23-FB3C-464F-9A43-CC136D990996 - bc060c9bea426aeb"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
                   symbolName = "Graphics::Display::GlobalHOGToViewport(Graphics::viewport const&amp;, Graphics::point, int, int) const"
-                  moduleName = "Snakebird"
+                  moduleName = "Hexagon"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/nathanst/Documents/GitHub/hog2/utils/Graphics.cpp"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "434"
-                  endingLineNumber = "434"
-                  offsetFromSymbolStart = "228">
-               </Location>
-               <Location
-                  uuid = "6CF11B23-FB3C-464F-9A43-CC136D990996 - d84fd0f3e5266854"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "Graphics::Display::GlobalHOGToViewport(Graphics::viewport const&amp;, Graphics::point, int, int) const"
-                  moduleName = "Snakebird"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/nathanst/Documents/GitHub/hog2/utils/Graphics.cpp"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "434"
-                  endingLineNumber = "434"
-                  offsetFromSymbolStart = "732">
-               </Location>
-               <Location
-                  uuid = "6CF11B23-FB3C-464F-9A43-CC136D990996 - 413ea972443ad7d5"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "Graphics::Display::GlobalHOGToViewport(Graphics::viewport const&amp;, Graphics::point, int, int) const"
-                  moduleName = "Robotic Arm"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/nathanst/Documents/GitHub/hog2/utils/Graphics.cpp"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "434"
-                  endingLineNumber = "434"
-                  offsetFromSymbolStart = "228">
-               </Location>
-               <Location
-                  uuid = "6CF11B23-FB3C-464F-9A43-CC136D990996 - 413ea972443ad7d5"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "Graphics::Display::GlobalHOGToViewport(Graphics::viewport const&amp;, Graphics::point, int, int) const"
-                  moduleName = "Robotic Arm"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/nathanst/Documents/GitHub/hog2/utils/Graphics.cpp"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "434"
-                  endingLineNumber = "434"
-                  offsetFromSymbolStart = "732">
-               </Location>
-               <Location
-                  uuid = "6CF11B23-FB3C-464F-9A43-CC136D990996 - d84fd0f3e5266854"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "Graphics::Display::GlobalHOGToViewport(Graphics::viewport const&amp;, Graphics::point, int, int) const"
-                  moduleName = "Snakebird"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/nathanst/Documents/GitHub/hog2/utils/Graphics.cpp"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "434"
-                  endingLineNumber = "434"
+                  startingLineNumber = "452"
+                  endingLineNumber = "452"
                   offsetFromSymbolStart = "184">
+               </Location>
+               <Location
+                  uuid = "6CF11B23-FB3C-464F-9A43-CC136D990996 - bc060c9bea426b4e"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Graphics::Display::GlobalHOGToViewport(Graphics::viewport const&amp;, Graphics::point, int, int) const"
+                  moduleName = "Hexagon"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/nathanst/Documents/GitHub/hog2/utils/Graphics.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "447"
+                  endingLineNumber = "447"
+                  offsetFromSymbolStart = "156">
+               </Location>
+               <Location
+                  uuid = "6CF11B23-FB3C-464F-9A43-CC136D990996 - bc060c9bea426b4e"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Graphics::Display::GlobalHOGToViewport(Graphics::viewport const&amp;, Graphics::point, int, int) const"
+                  moduleName = "Hexagon"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/nathanst/Documents/GitHub/hog2/utils/Graphics.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "447"
+                  endingLineNumber = "447"
+                  offsetFromSymbolStart = "152">
                </Location>
             </Locations>
          </BreakpointContent>
@@ -769,8 +724,8 @@
             filePath = "../../../apps/arm/RoboticArmTest.cpp"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "297"
-            endingLineNumber = "297"
+            startingLineNumber = "323"
+            endingLineNumber = "323"
             landmarkName = "MyFrameHandler(id, viewport)"
             landmarkType = "9">
             <Locations>
@@ -817,9 +772,153 @@
             filePath = "../../../apps/arm/RoboticArmTest.cpp"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "282"
-            endingLineNumber = "282"
+            startingLineNumber = "308"
+            endingLineNumber = "308"
             landmarkName = "MyFrameHandler(id, viewport)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "CD6630CF-7A92-425F-996C-857B3BE4789F"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../generic/ParallelAStarIDAStar.h"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "82"
+            endingLineNumber = "82"
+            landmarkName = "GetPath(env1, env2, from, to, thePath)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "BC77306D-E38A-46B9-8DB8-A4944C7DA891"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../generic/ParallelAStarIDAStar.h"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "93"
+            endingLineNumber = "93"
+            landmarkName = "GetPath(env1, env2, from, to, thePath)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "EC356A7D-B944-4C57-9DF4-8E4A22481CAF"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../generic/ParallelAStarIDAStar.h"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "105"
+            endingLineNumber = "105"
+            landmarkName = "GetPath(env1, env2, from, to, thePath)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "EC356A7D-B944-4C57-9DF4-8E4A22481CAF - 57824ea0840c39f5"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "ParallelAStarIDAStar&lt;RubiksCube, RubiksState, int&gt;::GetPath(RubiksCube*, RubiksState, RubiksState, std::__1::vector&lt;int, std::__1::allocator&lt;int&gt;&gt;&amp;)"
+                  moduleName = "RC"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/nathanst/Documents/GitHub/hog2/generic/ParallelAStarIDAStar.h"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "102"
+                  endingLineNumber = "102"
+                  offsetFromSymbolStart = "488">
+               </Location>
+               <Location
+                  uuid = "EC356A7D-B944-4C57-9DF4-8E4A22481CAF - 57824ea0840c3916"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "ParallelAStarIDAStar&lt;RubiksCube, RubiksState, int&gt;::GetPath(RubiksCube*, RubiksState, RubiksState, std::__1::vector&lt;int, std::__1::allocator&lt;int&gt;&gt;&amp;)"
+                  moduleName = "RC"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/nathanst/Documents/GitHub/hog2/generic/ParallelAStarIDAStar.h"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "103"
+                  endingLineNumber = "103"
+                  offsetFromSymbolStart = "284">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "917E912C-A6FF-41D6-9568-002FC589EA1B"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../generic/ParallelAStarIDAStar.h"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "242"
+            endingLineNumber = "242"
+            landmarkName = "StartThreadedIteration(env, bound)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "917E912C-A6FF-41D6-9568-002FC589EA1B - b6ba38faf1f031e9"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "ParallelAStarIDAStar&lt;RubiksCube, RubiksState, int&gt;::StartThreadedIteration(RubiksCube, double)"
+                  moduleName = "RC"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/nathanst/Documents/GitHub/hog2/generic/ParallelAStarIDAStar.h"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "215"
+                  endingLineNumber = "215"
+                  offsetFromSymbolStart = "508">
+               </Location>
+               <Location
+                  uuid = "917E912C-A6FF-41D6-9568-002FC589EA1B - b6ba38faf1f031e9"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "ParallelAStarIDAStar&lt;RubiksCube, RubiksState, int&gt;::StartThreadedIteration(RubiksCube, double)"
+                  moduleName = "RC"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/nathanst/Documents/GitHub/hog2/generic/ParallelAStarIDAStar.h"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "215"
+                  endingLineNumber = "215"
+                  offsetFromSymbolStart = "448">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "5542EA5C-2DF3-4C06-955A-81A492740851"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../generic/ParallelAStarIDAStar.h"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "137"
+            endingLineNumber = "137"
+            landmarkName = "GetPath(env1, env2, from, to, thePath)"
             landmarkType = "9">
          </BreakpointContent>
       </BreakpointProxy>
