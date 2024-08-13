@@ -13,6 +13,7 @@
 #include <math.h>
 #include "GLUtil.h" // TODO: needs to be renamed, if data structures are to be more widely re-used
 #include "FPUtil.h"
+#include <cstdint>
 
 // TODO: move back into namespace - but lots of code has to be updated; task for later
 enum viewportType {
