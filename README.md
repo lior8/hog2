@@ -50,7 +50,7 @@ TODO
 To build the project on the command-line, you must first download the source code:
 
 ```sh
-git clone https://github.com/nathansttt/hog2.git`
+git clone https://github.com/nathansttt/hog2.git
 ```
 
 Then traverse to the build directory with:
