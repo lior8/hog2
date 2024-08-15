@@ -105,9 +105,9 @@ RoboticArm::~RoboticArm()
 	delete ce;
 }
 
-void RoboticArm::GetTipPosition( armAngles &s, double &x, double &y )
+void RoboticArm::GetTipPosition(const armAngles &s, double &x, double &y ) const
 {
-	std::vector<line2d> armSegs;
+	static std::vector<line2d> armSegs;
 	GenerateLineSegments( s, armSegs );
 	recVec a = armSegs.back().end;
 	x = a.x;
@@ -151,6 +151,10 @@ void RoboticArm::GetSuccessors(const armAngles &nodeID, std::vector<armAngles> &
 //			neighbors.push_back(s);
 //	}
 	int maxVal = pow(3.0, nodeID.GetNumArms());
+
+	double tipx, tipy;
+	GetTipPosition(nodeID, tipx, tipy);
+
 	for (int x = 1; x < maxVal; x++)
 	{
 		armAngles s = nodeID;
@@ -168,8 +172,8 @@ void RoboticArm::GetSuccessors(const armAngles &nodeID, std::vector<armAngles> &
 		}
 		
 		ApplyAction(s, a);
-			
-		if (LegalState(s))
+
+		if (LegalAction(s, tipx, tipy))
 			neighbors.push_back(s);
 	}
 }
@@ -413,6 +417,29 @@ void RoboticArm::Draw(Graphics::Display &display) const
 	}
 }
 
+void RoboticArm::Draw(Graphics::Display &display, const armAngles &a, int which, rgbColor c) const
+{
+	recVec e;
+	if (a.IsGoalState())
+	{
+		e.z = 0;
+		a.GetGoal(e.x, e.y);
+	}
+	else {
+		GenerateLineSegments(a, armSegments);
+		
+		int x = which;
+		{
+			display.DrawLine(point3d(armSegments[x].start.x, armSegments[x].start.y),
+							 point3d(armSegments[x].end.x, armSegments[x].end.y),
+							 0.01f, c);
+		}
+		e = armSegments.back().end;
+	}
+
+	display.FrameCircle(point3d(e.x, e.y), tolerance, Colors::green, 0.01f);
+}
+
 void RoboticArm::Draw(Graphics::Display &display, const armAngles &a) const
 {
 	recVec e;
@@ -429,22 +456,11 @@ void RoboticArm::Draw(Graphics::Display &display, const armAngles &a) const
 			display.DrawLine(point3d(armSegments[x].start.x, armSegments[x].start.y),
 							 point3d(armSegments[x].end.x, armSegments[x].end.y),
 							 0.01f, Colors::white);
-//			glColor3f(1, 1, 1);
-//			//printf("Drawing line segment %d of %d\n", x, armSegments.size());
-//			DrawLine(armSegments[x]);
 		}
 		e = armSegments.back().end;
 	}
 
 	display.FrameCircle(point3d(e.x, e.y), tolerance, Colors::green, 0.01f);
-//	glBegin(GL_LINE_LOOP);
-//	glColor3f(0, 1.0, 0);
-//	glVertex3f(e.x+tolerance, e.y+tolerance, 0);
-//	glVertex3f(e.x-tolerance, e.y+tolerance, 0);
-//	glVertex3f(e.x-tolerance, e.y-tolerance, 0);
-//	glVertex3f(e.x+tolerance, e.y-tolerance, 0);
-//	glEnd();
-	
 }
 
 void RoboticArm::Draw(Graphics::Display &display, const armAngles &, const armRotations &) const
@@ -543,18 +559,44 @@ void RoboticArm::GetNextState(const armAngles &currents, armRotations dir, armAn
 	ApplyAction(news, dir);
 }
 
+bool RoboticArm::LegalAction(const armAngles &a, double tipx, double tipy) const
+{
+	GenerateLineSegments(a, armSegments);
+	// build line from tip to tip after move
+	line2d move = armSegments.back();
+	move.start.x = tipx;
+	move.start.y = tipy;
+
+	// avoid letting the resolution of the move jump over line segments
+	// Note that this only prevents the tip from going through, not the middle of the segment
+	for (unsigned int y = 0; y < obstacles.size(); y++)
+	{
+		if (move.crosses(obstacles[y]))
+			return false;
+	}
+	for (unsigned int y = 0; y < armSegments.size(); y++)
+		if (move.crosses(armSegments[y]))
+			return false;
+
+	for (unsigned int x = 0; x < armSegments.size(); x++)
+	{
+		for (unsigned int y = 0; y < obstacles.size(); y++)
+		{
+			if (armSegments[x].crosses(obstacles[y]))
+				return false;
+		}
+		for (unsigned int y = x+2; y < armSegments.size(); y++)
+			if (armSegments[x].crosses(armSegments[y]))
+				return false;
+
+		if ((x > 0) && (a.GetAngle(x) == 0))
+			return false;
+	}
+	return true;
+}
+
 bool RoboticArm::LegalState(armAngles &a) const
 {
-//	if ( legalStateTable != NULL ) {
-//		uint64_t idx;
-//
-//		idx = ArmAnglesIndex( a );
-//		if ( legalStateTable[ idx >> 3 ]  & ( 1 << ( idx & 7 ) ) ) {
-//			return true;
-//		}
-//		return false;
-//	}
-
 	GenerateLineSegments(a, armSegments);
 	for (unsigned int x = 0; x < armSegments.size(); x++)
 	{

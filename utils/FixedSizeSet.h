@@ -9,6 +9,7 @@
 #ifndef FixedSizeSet_h
 #define FixedSizeSet_h
 
+#include <stdio.h>
 #include <string.h>
 #include <functional>
 #include <cstddef>

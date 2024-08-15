@@ -13,6 +13,7 @@
 #include <math.h>
 #include "GLUtil.h" // TODO: needs to be renamed, if data structures are to be more widely re-used
 #include "FPUtil.h"
+#include <cstdint>
 
 // TODO: move back into namespace - but lots of code has to be updated; task for later
 enum viewportType {
@@ -66,6 +67,8 @@ struct point {
 	{ point p = *this; p+=i; return p; }
 	point operator-(const point &i) const
 	{ point p = *this; p-=i; return p; }
+	point operator/(const float f) const
+	{ point p = *this; p.x/=f;p.y/=f;p.z/=f; return p; }
 
 
 	float length() const
@@ -146,6 +149,12 @@ inline std::ostream &operator<<(std::ostream &o, const rect&r)
 inline std::ostream &operator<<(std::ostream &o, const point&r)
 { o << "(" << r.x << ", " << r.y  << ", " << r.z << ")"; return o; }
 
+inline std::ostream &operator<<(std::ostream &out, const triangle &t)
+{
+	out << "[" << t.p1 << ", " << t.p2 << ", " << t.p3 << "]";
+	return out;
+}
+
 //bool PointInRect(const point3d &p, const rect &r);
 bool PointInRect(const point &p, const rect &r);
 
@@ -184,6 +193,7 @@ public:
 	void FillCircle(point p, float radius, rgbColor c);
 	void FillTriangle(const triangle &t, rgbColor c);
 	void FillTriangle(point p1, point p2, point p3, rgbColor c);
+	void FrameTriangle(const triangle &t, float lineWidth, rgbColor c);
 	void FrameTriangle(point p1, point p2, point p3, float lineWidth, rgbColor c);
 
 

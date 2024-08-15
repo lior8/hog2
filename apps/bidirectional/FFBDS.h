@@ -313,7 +313,7 @@ bool FFBDS<state, action, environment>::GetNextPair(state &nForward, state &nBac
 		{
 			if (j.second.where != kOpenList)
 				continue;
-			double val = i.second.g + j.second.g + env->HCost(i.first, j.first);
+			double val = i.second.g + j.second.g + heuristic->HCost(i.first, j.first);
 			if (fless(val, bestCost))
 			{
 				bestCost = val;

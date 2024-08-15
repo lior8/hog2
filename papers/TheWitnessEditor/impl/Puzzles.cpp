@@ -118,17 +118,17 @@ void Fig6Puzzle4()
 
 void k87fxsr()
 {
-    witness.AddSeparationConstraint(0, 0, Colors::cyan);
-    witness.AddSeparationConstraint(0, 3, Colors::cyan);
+    witness.AddSeparationConstraint(0, 0, Colors::blue);
+    witness.AddSeparationConstraint(0, 3, Colors::blue);
 
-    witness.AddSeparationConstraint(1, 1, Colors::yellow);
-    witness.AddSeparationConstraint(2, 1, Colors::yellow);
+    witness.AddSeparationConstraint(1, 1, Colors::orange);
+    witness.AddSeparationConstraint(2, 1, Colors::orange);
 
     witness.AddSeparationConstraint(1, 2, Colors::green);
     witness.AddSeparationConstraint(2, 2, Colors::green);
 
-    witness.AddSeparationConstraint(3, 0, Colors::magenta);
-    witness.AddSeparationConstraint(3, 3, Colors::magenta);
+    witness.AddSeparationConstraint(3, 0, Colors::black);
+    witness.AddSeparationConstraint(3, 3, Colors::black);
 }
 
 void _27sck7g()
@@ -142,9 +142,9 @@ void _27sck7g()
             witness.AddMustCrossConstraint(x, y);
         }
     }
-    
+
     witness.AddSeparationConstraint(0, 3, Colors::cyan);
-    
+
     witness.AddSeparationConstraint(3, 0, Colors::cyan);
     witness.AddSeparationConstraint(3, 1, Colors::black);
     witness.AddSeparationConstraint(3, 2, Colors::black);

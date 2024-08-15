@@ -14,6 +14,10 @@ bool operator==(const airplaneState &s1, const airplaneState &s2)
 	return (s1.x == s2.x && s1.y == s2.y && s1.height == s2.height && s1.speed == s2.speed && s1.heading == s2.heading);
 }
 
+bool operator==(const airplaneAction &s1, const airplaneAction &s2)
+{
+	return (s1.turn == s2.turn && s1.speed == s2.speed && s1.height == s2.height);
+}
 
 AirplaneEnvironment::AirplaneEnvironment()
 {

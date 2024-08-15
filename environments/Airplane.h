@@ -45,6 +45,7 @@ public:
 };
 
 bool operator==(const airplaneState &s1, const airplaneState &s2);
+bool operator==(const airplaneAction &s1, const airplaneAction &s2);
 
 //class GoalTester {
 //public:

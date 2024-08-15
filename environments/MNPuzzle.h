@@ -1475,14 +1475,14 @@ void MNPuzzle<width, height>::Create_Random_MN_Puzzles(MNPuzzleState<width, heig
 {
 	std::map<uint64_t, uint64_t> puzzle_map; // used to ensure uniqueness
 	
-	MNPuzzle my_puzz(width, height);
+	MNPuzzle<width, height> my_puzz;
 	
 	unsigned count = 0;
 	unsigned goal_parity = GetParity(goal);
 	
 	while (count < num_puzzles)
 	{
-		MNPuzzleState<width, height> next = Generate_Random_Puzzle(width, height);
+		MNPuzzleState<width, height> next = MNPuzzle<width, height>::Generate_Random_Puzzle();
 		uint64_t next_hash = my_puzz.GetStateHash(next);
 		
 		if (puzzle_map.find(next_hash) != puzzle_map.end())

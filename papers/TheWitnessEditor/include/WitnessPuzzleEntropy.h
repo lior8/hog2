@@ -142,6 +142,33 @@ public:
         H::actCache.returnItem(&actions);
         return CalculateAdversaryEntropy(env, state, lookahead);
     }
+
+    double CalculateTotalSolutionInformation(const Witness<width, height>& env,
+                                             WitnessState<width, height>& state)
+    {
+        if (env.GoalTest(state)) return 0.0;
+        auto& actions = *H::actCache.getItem();
+        env.GetActions(state, actions);
+        H::ruleSet.FilterActions(env, state, actions);
+        if (actions.empty()) {
+            H::actCache.returnItem(&actions);
+            return H::inf;
+        }
+        auto& children = *H::doubleCache.getItem();
+        for (const auto& action : actions) {
+            env.ApplyAction(state, action);
+            children.emplace_back(CalculateTotalSolutionInformation(env, state));
+            env.UndoAction(state, action);
+        }
+        H::actCache.returnItem(&actions);
+        const double information =
+            std::log2(children.size() / std::accumulate(children.cbegin(), children.cend(), 0.0,
+                                                        [](const auto& sum, const auto& info) {
+                                                            return sum + std::exp2(-info);
+                                                        }));
+        H::doubleCache.returnItem(&children);
+        return information;
+    }
 };
 
 #endif /* THE_WITNESS_EDITOR_INCLUDE_WITNESS_PUZZLE_ENTROPY_H */

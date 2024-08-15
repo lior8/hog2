@@ -1,3 +1,8 @@
-Makefile.*.inc linguist-language=Makefile
-maps/** linguist-documentation
-scenarios/** linguist-documentation
+*.h linguist-language=C++
+*.inc linguist-language=Makefile
+
+build/XCode/**/*.h linguist-language=Objective-C
+
+maps/** linguist-detectable=false
+scenarios/** linguist-detectable=false
+

@@ -1,5 +1,5 @@
 /*
- *  perceptron.h
+ *  Perceptron.h
  *  games
  *
  *  Created by Nathan Sturtevant on 3/2/05.

@@ -41,7 +41,7 @@ void WitnessKeyboardHandler(unsigned long windowID, tKeyboardModifier mod, char 
     {
         auto path = std::filesystem::temp_directory_path().string() + std::string("editor.svg");
         Graphics::Display &display = GetContext(windowID)->display;
-        MakeSVG(display, path.c_str(), 600, 600, 0);
+        MakeSVG(display, path.c_str(), 640, 640, 0);
         std::cout << "Saved to " << path << std::endl;
         break;
     }

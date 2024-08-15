@@ -3874,6 +3874,18 @@ void Witness<width, height>::Draw(Graphics::Display &display) const
 
         display.FillRect({-1, -1, 1, 1}, outerBackColor);
         display.FillRect({p1.x, p2.y, p2.x, p1.y}, backColor);
+//        p1 = GetScreenCoord(0, 0);
+//        p2 = GetScreenCoord(1, 1);
+//        display.FillRect({p1.x, p2.y, p2.x, p1.y}, Colors::lightred);
+//        p1 = GetScreenCoord(2, 2);
+//        p2 = GetScreenCoord(3, 3);
+//        display.FillRect({p1.x, p2.y, p2.x, p1.y}, Colors::lightred);
+//        p1 = GetScreenCoord(2, 3);
+//        p2 = GetScreenCoord(3, 4);
+//        display.FillRect({p1.x, p2.y, p2.x, p1.y}, Colors::lightred);
+//        p1 = GetScreenCoord(3, 0);
+//        p2 = GetScreenCoord(4, 1);
+//        display.FillRect({p1.x, p2.y, p2.x, p1.y}, Colors::lightred);
     }
 
     for (int x = 0; x <= width; x++)

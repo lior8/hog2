@@ -1,5 +1,5 @@
 /*
- *  perceptron.cpp
+ *  Perceptron.cpp
  *  games
  *
  *  Created by Nathan Sturtevant on 3/2/05.
@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include "perceptron.h"
+#include "Perceptron.h"
 
 static const float VERSION = 1.0;
 

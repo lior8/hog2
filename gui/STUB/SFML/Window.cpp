@@ -11,6 +11,10 @@ namespace sf
 	VideoMode::VideoMode(){}
 	VideoMode::VideoMode(unsigned int modeWidth, unsigned int modeHeight, unsigned int modeBitsPerPixel){}
 
+  bool WindowBase::isOpen() const { return true; }
+  bool WindowBase::pollEvent(Event& event) { return false; }
+
+  
 	Window::Window(VideoMode mode, const String& title, Uint32 style, const ContextSettings& settings) {}
 	Window::~Window() {}
     void Window::close() {}

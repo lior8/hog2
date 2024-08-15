@@ -24,7 +24,11 @@ Display::Display()
 	currViewport = 0;
 	numViewports = 1;
 	backgroundFrame = foregroundFrame = 0;
-	drawingBackground = false;	}
+	drawingBackground = false;
+	// Default viewport
+	AddViewport({-1, -1, 1, 1}, kScaleToSquare);
+}
+
 
 void Display::StartFrame()
 {
@@ -166,6 +170,15 @@ void Display::FillTriangle(point p1, point p2, point p3, rgbColor c)
 void Display::FrameTriangle(point p1, point p2, point p3, float lineWidth, rgbColor c)
 {
 	triangleInfo i = {p1, p2, p3, c, lineWidth};
+	if (drawingBackground)
+		backgroundDrawCommands.push_back({i, kFrameTriangle, currViewport});
+	else
+		drawCommands.push_back({i, kFrameTriangle, currViewport});
+}
+
+void Display::FrameTriangle(const triangle &t, float lineWidth, rgbColor c)
+{
+	triangleInfo i = {t.p1, t.p2, t.p3, c, lineWidth};
 	if (drawingBackground)
 		backgroundDrawCommands.push_back({i, kFrameTriangle, currViewport});
 	else
