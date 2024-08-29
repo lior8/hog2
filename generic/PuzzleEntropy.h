@@ -31,17 +31,18 @@ protected:
     vectorCache<EntropyInfo> entropyInfoCache;
     vectorCache<double> doubleCache;
     bool isRelative = false;
+    bool base2 = false;
 
-    static void Softmin(const std::vector<double> &vars, std::vector<double> &ret)
+    void Softmin(const std::vector<double> &vars, std::vector<double> &ret)
     {
         const double sum = std::accumulate(vars.cbegin(), vars.cend(), 0.0,
-            [](const double r, const double i) {
-                return r + std::exp(-i);
+            [=](const double r, const double i) {
+                return r + (base2 ? std::exp2(-i) : std::exp(-i));
         });
         ret.reserve(vars.size());
         std::transform(vars.cbegin(), vars.cend(), std::back_inserter(ret),
-            [&sum](const double i) {
-                return std::exp(-i) / sum;
+            [=](const double i) {
+                return (base2 ? std::exp2(-i) : std::exp(-i)) / sum;
         });
     }
 
@@ -107,8 +108,14 @@ public:
         return *this;
     }
 
-    virtual EntropyInfo Calculate(const SearchEnvironment<State, Action> &env, State &state, unsigned lookahead,
-                                  std::optional<Action> prevAction)
+    auto& SetBase2(bool val)
+    {
+        this->base2 = val;
+        return *this;
+    }
+
+    virtual EntropyInfo Calculate(const SearchEnvironment<State, Action> &env, State &state,
+                                  unsigned lookahead, std::optional<Action> prevAction)
     {
         if (env.GoalTest(state))
             return { 0.0, 0 };

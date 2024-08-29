@@ -55,23 +55,32 @@ static void InitTetrisPieces()
 
 static void temp()
 {
-    witness.AddSeparationConstraint(0, 2, Colors::orange);
-    witness.AddSeparationConstraint(2, 3, Colors::orange);
-    witness.AddStarConstraint(1, 1, Colors::magenta);
-    witness.AddStarConstraint(3, 1, Colors::magenta);
-    witness.AddSeparationConstraint(3, 0, Colors::yellow);
-    witness.AddSeparationConstraint(1, 3, Colors::yellow);
-    witness.AddMustCrossConstraint(true, 0, 4);
-    witness.AddMustCrossConstraint(false, 2, 0);
-    witness.AddMustCrossConstraint(false, 3, 1);
-    witness.CountColors();
+//    witness.AddSeparationConstraint(0, 0, Colors::blue);
+//    witness.AddSeparationConstraint(2, 0, Colors::blue);
+//    witness.AddSeparationConstraint(1, 1, Colors::orange);
+//    witness.AddSeparationConstraint(3, 1, Colors::orange);
+//    witness.AddSeparationConstraint(0, 2, Colors::orange);
+//    witness.AddSeparationConstraint(3, 2, Colors::blue);
+//    witness.AddSeparationConstraint(1, 3, Colors::blue);
+//    witness.AddSeparationConstraint(2, 3, Colors::orange);
+//    witness.AddSeparationConstraint(1, 2, Colors::lightblue);
+//    witness.AddSeparationConstraint(2, 2, Colors::black);
+//    witness.AddSeparationConstraint(3, 2, Colors::lightblue);
+//    witness.AddMustCrossConstraint(true, 1, 2);
+//    witness.AddMustCrossConstraint(false, 1, 2);
+//    witness.AddMustCrossConstraint(true, 3, 3);
+    witness.AddTriangleConstraint(1, 1, 3);
 }
 
 static void InitPuzzle()
 {
     entropy.ruleSet.SetRules(gInferenceRules);
+    gUseRelativeEntropy = false;
+    entropy.SetRelative(gUseRelativeEntropy).SetBase2(true);
+    witness.SetStart(2, 0);
+//    witness.SetGoal(5, 0);
     GetAllSolutions(witness, allSolutions);
-//    _27sck7g();
+//    k87fxsr();
     temp();
     BuildTree(witness, allSolutions, solutionTree);
 //    PrintTree(solutionTree);

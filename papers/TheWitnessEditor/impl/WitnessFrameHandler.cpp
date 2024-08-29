@@ -35,7 +35,7 @@ std::vector<ColorItem> gProvidedColors = {
     {Colors::yellow, Graphics::point{-0.3, -0.2}, 0.1},
     {Colors::red, Graphics::point{-0.15, -0.2}, 0.1},
     {Colors::green, Graphics::point{0.0, -0.2}, 0.1},
-    {Colors::blue, Graphics::point{0.15, -0.2}, 0.1},
+    {Colors::lightblue, Graphics::point{0.15, -0.2}, 0.1},
     {Colors::orange, Graphics::point{0.3, -0.2}, 0.1},
 };
 
@@ -57,9 +57,9 @@ static void DrawGameViewport(unsigned long windowID)
         witness.Draw(display);
         iws.IncrementTime();
         witness.Draw(display, iws);
-        if (solved)
-            display.DrawText("Solved!", Graphics::point{1, 1}, Colors::black, 0.075,
-                             Graphics::textAlignRight, Graphics::textBaselineBottom);
+//        if (solved)
+//            display.DrawText("Solved!", Graphics::point{1, 1}, Colors::black, 0.075,
+//                             Graphics::textAlignRight, Graphics::textBaselineBottom);
     }
     else
     {

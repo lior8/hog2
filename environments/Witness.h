@@ -1306,7 +1306,7 @@ public:
     std::vector<std::pair<int, int>> start;
     std::vector<std::pair<int, int>> goal;
     // constant-time lookup for which goal is nearby
-    // value is hte index in the goal array+1 (0 index means no goal)
+    // value is the index in the goal array+1 (0 index means no goal)
     std::array<int, (width + 1) * (height + 1)> goalMap;
     //	const int kStartX = 0, kStartY = 0;
 
@@ -1463,31 +1463,34 @@ public:
         for (auto i = std::sregex_iterator(entities.begin(), entities.end(), es_r); i != std::sregex_iterator(); ++i)
         {
             const auto& match = *i;
-            switch (const int type = std::stoi(match[1].str());
-                type) {
+            switch (const int type = std::stoi(match[1].str()); type)
+            {
                 case 3:
                 case 4: // only support single start and goal currently
                 {
                     auto loc = locationMap[count++].second;
                     for (auto y = height; y >= 0; --y)
+                    {
                         for (auto x = 0; x <= width; ++x)
-                            if (loc == width * (height + 1) + (width + 1) * height + (width + 1) * y + x)
-                            {
-                                if (type == 3)
-                                    SetStart(x, y);
-                                else
-                                {
-                                    if (x == 0)
-                                        SetGoal(x - 1, y);
-                                    else if (x == width)
-                                        SetGoal(x + 1, y);
-                                    else if (y == 0)
-                                        SetGoal(x, y - 1);
-                                    else if (y == height)
-                                        SetGoal(x, y + 1);
-                                }
-                                break;
-                            }
+                        {
+                           if (loc == width * (height + 1) + (width + 1) * height + (width + 1) * y + x)
+                           {
+                               if (type == 3)
+                                   SetStart(x, y);
+                               else
+                               {
+                                   if (x == 0)
+                                       SetGoal(x - 1, y);
+                                   else if (x == width)
+                                       SetGoal(x + 1, y);
+                                   else if (y == 0)
+                                       SetGoal(x, y - 1);
+                                   else if (y == height)
+                                       SetGoal(x, y + 1);
+                               }
+                           }
+                        }
+                    }
                     break;
                 }
                 case 5:
@@ -1943,9 +1946,17 @@ void Witness<width, height>::GetLeftRightRegions(const WitnessState<width, heigh
     lhs.clear();
     rhs.clear();
     auto [x0, y0] = path[0];
+    auto checkStart = true;
     for (auto i = 1; i < path.size(); ++i)
     {
         auto [x1, y1] = path[i];
+        if (!(x0 == 0 || x0 == width || y0 == 0 || y0 == height) && checkStart)
+        {
+            x0 = x1;
+            y0 = y1;
+            continue;
+        }
+        checkStart = false;
         assert(!(x1 == x0 + 1 && y1 == y0 + 1));
         if (x1 == x0 + 1) // right
         {
@@ -2379,8 +2390,8 @@ double Witness<width, height>::GCost(const WitnessState<width, height> &node, co
 }
 
 template<int width, int height>
-bool Witness<width, height>::GoalTest(
-        const WitnessState<width, height> &node, const WitnessState<width, height> &goal) const
+bool Witness<width, height>::GoalTest(const WitnessState<width, height> &node,
+                                      const WitnessState<width, height> &g) const
 {
     // Check constraints
     return GoalTest(node);
@@ -2532,8 +2543,8 @@ bool Witness<width, height>::PathTest(const WitnessState<width, height> &node) c
 {
     if (node.path.size() <= 1)
         return true;
-    const auto &head = node.path.back();
-    if (std::find(goal.cbegin(), goal.cend(), head) != goal.cend() ||
+    if (const auto &head = node.path.back();
+        std::find(goal.cbegin(), goal.cend(), head) != goal.cend() ||
         goalMap[GetPathIndex(head.first, head.second)] != 0)
         return true;
     LabelRegions(node);
@@ -3863,6 +3874,18 @@ void Witness<width, height>::Draw(Graphics::Display &display) const
 
         display.FillRect({-1, -1, 1, 1}, outerBackColor);
         display.FillRect({p1.x, p2.y, p2.x, p1.y}, backColor);
+//        p1 = GetScreenCoord(0, 0);
+//        p2 = GetScreenCoord(1, 1);
+//        display.FillRect({p1.x, p2.y, p2.x, p1.y}, Colors::lightred);
+//        p1 = GetScreenCoord(2, 2);
+//        p2 = GetScreenCoord(3, 3);
+//        display.FillRect({p1.x, p2.y, p2.x, p1.y}, Colors::lightred);
+//        p1 = GetScreenCoord(2, 3);
+//        p2 = GetScreenCoord(3, 4);
+//        display.FillRect({p1.x, p2.y, p2.x, p1.y}, Colors::lightred);
+//        p1 = GetScreenCoord(3, 0);
+//        p2 = GetScreenCoord(4, 1);
+//        display.FillRect({p1.x, p2.y, p2.x, p1.y}, Colors::lightred);
     }
 
     for (int x = 0; x <= width; x++)
@@ -3893,10 +3916,9 @@ void Witness<width, height>::Draw(Graphics::Display &display) const
     // remap them onto edges. Loss of efficiency is negligible
     for (int x = 0; x <= width; x++)
     {
-        for (int y = 0; y <= width; y++)
+        for (int y = 0; y <= height; y++)
         {
-            int val;
-            if ((val = goalMap[GetPathIndex(x, y)]) != 0)
+            if (int val = goalMap[GetPathIndex(x, y)]; val != 0)
             {
                 auto endLoc = GetScreenCoord(goal[val - 1].first, goal[val - 1].second);
                 DoLine(display, GetScreenCoord(x, y), endLoc, lineColor);
