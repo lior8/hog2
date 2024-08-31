@@ -143,6 +143,7 @@ public:
 	puzzleWeight GetWeighted() const { return weight; }
 	void GetSuccessors(const MNPuzzleState<width, height> &stateID, std::vector<MNPuzzleState<width, height>> &neighbors) const;
 	void GetActions(const MNPuzzleState<width, height> &stateID, std::vector<slideDir> &actions) const;
+	void GetActions(const MNPuzzleState<width, height> &nodeID, std::vector<slideDir> &actions, const slideDir &lastAction) const;
 	slideDir GetAction(const MNPuzzleState<width, height> &s1, const MNPuzzleState<width, height> &s2) const;
 	slideDir GetAction(const MNPuzzleState<width, height> &l1, point3d p);
 	void ApplyAction(MNPuzzleState<width, height> &s, slideDir a) const;
@@ -153,6 +154,8 @@ public:
 	double HCost(const MNPuzzleState<width, height> &state1, const MNPuzzleState<width, height> &state2) const;
 	double HCost(const MNPuzzleState<width, height> &state1) const;
 	double DefaultH(const MNPuzzleState<width, height> &s) const;
+	double DCost(const MNPuzzleState<width, height> &state1, const MNPuzzleState<width, height> &state2) const;
+	double DCost(const MNPuzzleState<width, height> &state1) const;
 
 	double GCost(const MNPuzzleState<width, height> &state1, const MNPuzzleState<width, height> &state2) const;
 	double GCost(const MNPuzzleState<width, height> &, const slideDir &) const;
@@ -561,6 +564,22 @@ void MNPuzzle<width, height>::GetSuccessors(const MNPuzzleState<width, height> &
 }
 
 template <int width, int height>
+void MNPuzzle<width, height>::GetActions(const MNPuzzleState<width, height> &stateID,
+										 std::vector<slideDir> &actions, const slideDir &lastAction) const
+{
+	slideDir d = lastAction;
+	bool result = InvertAction(d);
+	assert(result);
+	actions.resize(0);
+	for (unsigned int i = 0; i < operators[stateID.blank].size(); i++)
+	{
+		if (!(operators[stateID.blank][i] == d))
+			actions.push_back(operators[stateID.blank][i]);
+	}
+}
+
+
+template <int width, int height>
 void MNPuzzle<width, height>::GetActions(const MNPuzzleState<width, height> &stateID, std::vector<slideDir> &actions) const
 {
 	actions.resize(0);
@@ -765,6 +784,45 @@ double MNPuzzle<width, height>::DefaultH(const MNPuzzleState<width, height> &sta
 	}
 	return man_dist;
 }
+
+template <int width, int height>
+double MNPuzzle<width, height>::DCost(const MNPuzzleState<width, height> &state1,
+									  const MNPuzzleState<width, height> &state2) const
+{
+	double hval = 0;
+	double man_dist = 0;
+	int xloc[width*height];
+	int yloc[width*height];
+	
+	for (unsigned int x = 0; x < width; x++)
+	{
+		for (unsigned int y = 0; y < height; y++)
+		{
+			xloc[state2.puzzle[x + y*width]] = x;
+			yloc[state2.puzzle[x + y*width]] = y;
+		}
+	}
+	for (unsigned int x = 0; x < width; x++)
+	{
+		for (unsigned int y = 0; y < height; y++)
+		{
+			if (state1.puzzle[x + y*width] != 0)
+			{
+				man_dist += (abs((int)(xloc[state1.puzzle[x + y*width]] - x))
+								 + abs((int)(yloc[state1.puzzle[x + y*width]] - y)));
+			}
+		}
+	}
+	hval = std::max(hval, man_dist);
+}
+
+template <int width, int height>
+double MNPuzzle<width, height>::DCost(const MNPuzzleState<width, height> &state1) const
+{
+	return DefaultH(state1);
+}
+
+
 
 static int costs[25] =
 {
