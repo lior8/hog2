@@ -26,15 +26,13 @@ public:
 	virtual state GetStateFromAbstractState(state &s) const { return s; }
 	
 	std::string GetFileName(const char *prefix);
-private:
+protected:
 	using PermutationPDB<state, action, environment, bits>::example;
 	using PermutationPDB<state, action, environment, bits>::distinct;
 	using PermutationPDB<state, action, environment, bits>::puzzleSize;
 
 	uint64_t Factorial(int val) const;
 	uint64_t FactorialUpperK(int n, int k) const;
-	
-protected:
 	
 	// cache for computing ranking/unranking
 	mutable std::vector<std::vector<int> > dualCache;
@@ -101,8 +99,8 @@ void LexPermutationPDB<state, action, environment, bits>::GetStateFromPDBHash(ui
 	
 	dual.resize(distinct.size());
 	
-	int numEntriesLeft = puzzleSize-distinct.size()+1;
-	for (int x = distinct.size()-1; x >= 0; x--)
+	int numEntriesLeft = puzzleSize-(int)(distinct.size())+1;
+	for (int x = (int)distinct.size()-1; x >= 0; x--)
 	{
 		dual[x] = hashVal%numEntriesLeft;
 		hashVal /= numEntriesLeft;
@@ -114,27 +112,28 @@ void LexPermutationPDB<state, action, environment, bits>::GetStateFromPDBHash(ui
 		}
 	}
 	//	s.puzzle.resize(puzzleSize);
-	std::fill(&s.puzzle[0], &s.puzzle[s.size()], -1);
+//	std::fill(&s.puzzle[0], &s.puzzle[s.size()], -1);
+	std::fill(s.puzzle.begin(), s.puzzle.end(), -1);
 	for (int x = 0; x < dual.size(); x++)
 		s.puzzle[dual[x]] = distinct[x];
 	s.FinishUnranking();
 }
 
-void GetStateFromHash(uint64_t hash, int *pieces, int count)
-{
-	int numEntriesLeft = 1;
-	for (int x = count-1; x >= 0; x--)
-	{
-		pieces[x] = hash%numEntriesLeft;
-		hash /= numEntriesLeft;
-		numEntriesLeft++;
-		for (int y = x+1; y < count; y++)
-		{
-			if (pieces[y] >= pieces[x])
-				pieces[y]++;
-		}
-	}
-}
+//void GetStateFromHash(uint64_t hash, int *pieces, int count)
+//{
+//	int numEntriesLeft = 1;
+//	for (int x = count-1; x >= 0; x--)
+//	{
+//		pieces[x] = hash%numEntriesLeft;
+//		hash /= numEntriesLeft;
+//		numEntriesLeft++;
+//		for (int y = x+1; y < count; y++)
+//		{
+//			if (pieces[y] >= pieces[x])
+//				pieces[y]++;
+//		}
+//	}
+//}
 
 
 template <class state, class action, class environment, int bits>
