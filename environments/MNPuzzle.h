@@ -20,6 +20,7 @@
 #include "GraphEnvironment.h"
 #include <sstream>
 #include <array>
+#include "LexPermutationPDB.h"
 
 template <int width, int height>
 class MNPuzzleState {
@@ -267,6 +268,51 @@ public:
 	double HCost(const graphState &state1, const graphState &state2) const;
 private:
 	MNPuzzle<width, height> puzzle;
+};
+
+template <int width, int height>
+class STPLexPDB : public LexPermutationPDB<MNPuzzleState<width, height>, slideDir, MNPuzzle<width, height>, 8> {
+public:
+	STPLexPDB(MNPuzzle<width, height> *e, const MNPuzzleState<width, height> &s, const std::vector<int> &distincts)
+	:LexPermutationPDB<MNPuzzleState<width, height>, slideDir, MNPuzzle<width, height>, 8>(e, s, distincts)
+	{}
+	virtual uint64_t GetPDBHash(const MNPuzzleState<width, height> &s, int threadID = 0) const
+	{
+		int locs[width*height];
+		int dual[width*height];
+		
+		// find item locations
+		for (unsigned int x = 0; x < s.size(); x++)
+		{
+			if (s.puzzle[x] != -1)
+				dual[s.puzzle[x]] = x;
+		}
+		for (size_t x = 0; x < this->distinct.size(); x++)
+		{
+			locs[x] = dual[this->distinct[x]];
+		}
+		
+		uint64_t hashVal = 0;
+		int numEntriesLeft = (int)s.size();
+		
+		for (unsigned int x = 0; x < distinct.size(); x++)
+		{
+			hashVal += locs[x]*FactorialUpperK(numEntriesLeft-1, s.size()-distinct.size());
+			numEntriesLeft--;
+			
+			// decrement locations of remaining items
+			for (unsigned y = x; y < distinct.size(); y++)
+			{
+				if (locs[y] > locs[x])
+					locs[y]--;
+			}
+		}
+		return hashVal;
+	}
+protected:
+	using PermutationPDB<MNPuzzleState<width, height>, slideDir, MNPuzzle<width, height>, 8>::distinct;
+	using LexPermutationPDB<MNPuzzleState<width, height>, slideDir, MNPuzzle<width, height>, 8>::Factorial;
+	using LexPermutationPDB<MNPuzzleState<width, height>, slideDir, MNPuzzle<width, height>, 8>::FactorialUpperK;
 };
 
 //typedef UnitSimulation<MNPuzzleState, slideDir, MNPuzzle> PuzzleSimulation;
@@ -1648,7 +1694,5 @@ std::vector<slideDir> MNPuzzle<width, height>::Get_Op_Order_From_Hash(int order_
 	
 	return ops;
 }
-
-
 
 #endif
