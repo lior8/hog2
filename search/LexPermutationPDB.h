@@ -112,8 +112,8 @@ void LexPermutationPDB<state, action, environment, bits>::GetStateFromPDBHash(ui
 		}
 	}
 	//	s.puzzle.resize(puzzleSize);
-//	std::fill(&s.puzzle[0], &s.puzzle[s.size()], -1);
-	std::fill(s.puzzle.begin(), s.puzzle.end(), -1);
+	std::fill(&s.puzzle[0], &s.puzzle[s.size()-1]+1, -1);
+//	std::fill(s.puzzle.begin(), s.puzzle.end(), -1);
 	for (int x = 0; x < dual.size(); x++)
 		s.puzzle[dual[x]] = distinct[x];
 	s.FinishUnranking();
