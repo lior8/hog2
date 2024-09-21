@@ -4329,7 +4329,7 @@ void Witness<width, height>::Draw(Graphics::Display &display, const InteractiveW
                 //alternate between col1 red and col2 every 0.25 secs
                 rgbColor blinkColor = (fmod(iws.frac, 0.5f) < 0.25f) ? Colors::black : constraintColorOnInvalid;
 
-                // draw path for 1 second, then let it fade out
+                // draw path then let it fade out
                 if (iws.frac <= 1) 
                 {   
                     PathColor(display, iws, interpolatedColor);
@@ -4340,7 +4340,7 @@ void Witness<width, height>::Draw(Graphics::Display &display, const InteractiveW
                     }
                 }
 
-                // draw invalid constraints for 2 secs
+                // draw invalid constraints
                 if (iws.frac <= 2) 
                 {
                     for (int i = 0; i < invalidConstraints.size(); ++i) 
