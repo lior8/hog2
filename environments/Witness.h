@@ -4366,11 +4366,9 @@ void Witness<width, height>::Draw(Graphics::Display &display, const InteractiveW
                                 // background red frame that blinks
                                 display.FillNGon(p, (lineWidth * 17/3) , 4, 45, interpolatedColor_2); 
 
-                                bool useBlinkColor = false; //to make the constraints blink
-
-                                // toggling useBlinkColor, making sure it ends with false
-                                useBlinkColor = (fmod(iws.frac, 0.5f) < 0.25f);  
-                                (fmod(iws.frac, 0.5f) < 0.25f) ? DrawRegionConstraint(display, GetRegionConstraint(pair.first, pair.second), p, false) : DrawRegionConstraint(display, GetRegionConstraint(pair.first, pair.second), p, true);
+				//to make the constraints blink
+                                bool useBlinkColor = (fmod(iws.frac, 0.5f) < 0.25f) ? true : false;
+                                DrawRegionConstraint(display, GetRegionConstraint(pair.first, pair.second), p, useBlinkColor);
 
                                 // to MAKE SURE the big start circle isn't being drawn on 
                                 display.FillCircle(GetScreenCoord(iws.ws.path[0].first, iws.ws.path[0].second), lineWidth * 3.f, interpolatedColor);
