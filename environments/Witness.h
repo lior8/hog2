@@ -3841,11 +3841,11 @@ void Witness<width, height>::DrawRegionConstraint(
     // default color is the constraint's assigned color - for kSeparation and kStar
     rgbColor currentColor = constraint.color;
     // if the cons is invalid, change color to red
-    if (isInvalid) currentColor = Colors::red;
+    if (isInvalid) currentColor = constraintColorOnInvalid;
     
-    rgbColor currentColor_tetris = Colors::red; // instead of tetrisYellow
-    rgbColor currentColor_nTetris = Colors::red; // instead of tetrisBlue
-    rgbColor currentColor_triangle = Colors::red; // instead of orange
+    rgbColor currentColor_tetris = constraintColorOnInvalid; // instead of tetrisYellow
+    rgbColor currentColor_nTetris = constraintColorOnInvalid; 
+    rgbColor currentColor_triangle = constraintColorOnInvalid; 
 
     switch (constraint.type)
     {
