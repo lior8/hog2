@@ -4326,7 +4326,7 @@ void Witness<width, height>::Draw(Graphics::Display &display, const InteractiveW
                 rgbColor interpolatedColor = rgbColor::mix(drawColorOnInvalid, lineColor, perc);
                 rgbColor interpolatedColor_2 = rgbColor::mix(Colors::lightred, outerBackColor, perc);
 
-                //alternate between col1 red and col2 every 0.25 secs
+                //alternate between col1 red and col2 
                 rgbColor blinkColor = (fmod(iws.frac, 0.5f) < 0.25f) ? Colors::black : constraintColorOnInvalid;
 
                 // draw path then let it fade out
