@@ -1445,7 +1445,7 @@ bool MyClickHandler(unsigned long, int, int, point3d p, tButtonType , tMouseEven
 			}
 			else {
 				printf("Invalid solution\n");
-				iws.Reset();
+				//iws.Reset();
 			}
 		}
 	}

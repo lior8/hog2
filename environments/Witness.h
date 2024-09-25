@@ -258,9 +258,35 @@ public:
 
     void IncrementTime()
     {
-        if (currState != kWaitingStart) return;
-        frac += 0.04;
-        if (frac > 3) frac = 0;
+        switch (currState)
+    	{
+            case kWaitingStart:
+                trackFrac = false; 
+            	frac += 0.04;
+            	if (frac > 3) 
+                    frac = 0; 
+            	break;
+
+        	case kWaitingRestart:
+                if (!trackFrac)
+                {
+                    frac = 0; 
+                    trackFrac = true; 
+                }
+                frac += 0.04; 
+                if (frac > 3) 
+                {
+                    frac = 0;
+                    Reset(); 
+                }
+                break;
+
+            case kInPoint:
+                frac += 0.04;
+            	if (frac > 3) 
+                    frac = 0; 
+            	break;
+    	}
     }
 
     WitnessState<width, height> ws;
@@ -276,6 +302,7 @@ public:
         kWaitingRestart
     };
     controlState currState;
+    mutable bool trackFrac = false; // for incrementTime
 };
 
 enum WitnessRegionConstraintType {
@@ -776,8 +803,8 @@ public:
     void GLDrawLine(const WitnessState<width, height> &x, const WitnessState<width, height> &y) const {};
 
     void DrawRegionConstraint(
-            Graphics::Display &display, const WitnessRegionConstraint &constraint, const Graphics::point &p3) const;
-
+            Graphics::Display &display, const WitnessRegionConstraint &constraint, const Graphics::point &p3, bool isInvalid) const;
+    
     void Draw(Graphics::Display &display) const;
 
     void Draw(Graphics::Display &display, const WitnessState<width, height> &) const;
@@ -1704,6 +1731,8 @@ public:
     const rgbColor backColor = Colors::white; // Colors::gray;
     const rgbColor outerBackColor = Colors::white;
     const rgbColor triangleColor = Colors::orange;
+    const rgbColor drawColorOnInvalid = Colors::darkred;
+    const rgbColor constraintColorOnInvalid = Colors::red;
 
     float scale = 0.75f;
     float gapOffset = scale * 2.0f / (width > height ? width : height); // size of each square
@@ -1815,6 +1844,36 @@ public:
             int curr, uint64_t board, uint64_t oob, uint64_t posFootprint, uint64_t negFootprint) const;
 
     void GetMouseActions(const WitnessState<width, height> &nodeID, std::vector <WitnessAction> &actions) const;
+
+    void PathColor(Graphics::Display &display, const InteractiveWitnessState<width, height> &iws, const rgbColor &color) const{
+        for (int i = 0; i < iws.ws.path.size() - 1; i++) {
+            Graphics::point p1 = GetScreenCoord(iws.ws.path[i].first, iws.ws.path[i].second);
+            Graphics::point p2 = GetScreenCoord(iws.ws.path[i + 1].first, iws.ws.path[i + 1].second);
+                       
+            DoLine(display, p1, p2, color);
+            display.FillCircle(p2, lineWidth, color);
+            display.FillCircle(GetScreenCoord(start[0].first, start[0].second), lineWidth * 3.f, color);
+        }
+    }
+
+    mutable std::vector<std::vector<std::pair<int, int>>> invalidConstraints;
+    mutable std::vector<std::pair<int, int>> mustCrossValid; // for must cross and cannot cross
+
+    void TrackInvalidConstraints(int i, int x, int y) const
+    {
+        if (i >= 0 && i < invalidConstraints.size()) { 
+            invalidConstraints[i].emplace_back(x, y);
+        } else {
+            invalidConstraints.resize(i + 1);
+            invalidConstraints[i].emplace_back(x, y);
+        }
+    }
+
+    // to track must cross constraints when the line crosses them, i.e., it's valid - to print under the fading path 
+    void TrackMustCross(int x, int y) const
+    {
+        mustCrossValid.emplace_back(x, y);
+    }
 
     void DoLine(
             Graphics::Display &display, const Graphics::point &p1, const Graphics::point &p2, const rgbColor &c) const
@@ -2695,29 +2754,62 @@ bool Witness<width, height>::PathTest(const WitnessState<width, height> &node) c
 template<int width, int height>
 bool Witness<width, height>::GoalTest(const WitnessState<width, height> &node) const
 {
+    // verdict is being used instead of the return statements to make sure all constraints are checked
+    bool verdict = true;
+
     // TODO: make this more efficient
     for (int x = 0; x < width + 1; x++)
     {
         for (int y = 0; y < height + 1; y++)
         {
-            if (GetMustCrossConstraint(x, y) && (!node.Occupied(x, y))) return false;
-            if (GetCannotCrossConstraint(x, y) && (node.Occupied(x, y))) return false;
+            if (GetMustCrossConstraint(x, y) && (!node.Occupied(x, y))) 
+            {
+                int xx = (width * (height + 1) + (width + 1) * height + (width + 1) * y + x);
+                TrackInvalidConstraints(kRegionConstraintCount + kMustCross, xx, y); //y is useless here, xx stores the index
+                verdict = false;
+            }
+            else if (GetMustCrossConstraint(x, y) && (node.Occupied(x, y))) 
+            {   
+                int xx = (width * (height + 1) + (width + 1) * height + (width + 1) * y + x);
+                TrackMustCross(xx, y);
+            }
+            if (GetCannotCrossConstraint(x, y) && (node.Occupied(x, y))) verdict = false;
         }
     }
     for (int x = 0; x < width; x++)
     {
         for (int y = 0; y <= height; y++)
         {
-            if (GetMustCrossConstraint(true, x, y) && !node.OccupiedEdge(x, y, x + 1, y)) return false;
-            if (GetCannotCrossConstraint(true, x, y) && node.OccupiedEdge(x, y, x + 1, y)) return false;
+            if (GetMustCrossConstraint(true, x, y) && !node.OccupiedEdge(x, y, x + 1, y)) 
+            {
+                int xx = (x + y * width); 
+                TrackInvalidConstraints(kRegionConstraintCount + kMustCross, xx, y);
+                verdict = false;
+            }
+            else if (GetMustCrossConstraint(true, x, y) && node.OccupiedEdge(x, y, x + 1, y)) 
+            {
+                int xx = (x + y * width); 
+                TrackMustCross(xx, y);
+            }
+            if (GetCannotCrossConstraint(true, x, y) && node.OccupiedEdge(x, y, x + 1, y)) verdict = false;
         }
     }
     for (int x = 0; x <= width; x++)
     {
         for (int y = 0; y < height; y++)
         {
-            if (GetMustCrossConstraint(false, x, y) && !node.OccupiedEdge(x, y, x, y + 1)) return false;
-            if (GetCannotCrossConstraint(false, x, y) && node.OccupiedEdge(x, y, x, y + 1)) return false;
+            if (GetMustCrossConstraint(false, x, y) && !node.OccupiedEdge(x, y, x, y + 1)) 
+            {
+                int xx = (width * (height + 1) + x * height + y);
+                TrackInvalidConstraints(kRegionConstraintCount + kMustCross, xx, y);
+                verdict = false;
+            }
+            else if (GetMustCrossConstraint(false, x, y) && node.OccupiedEdge(x, y, x, y + 1))
+            {
+                int xx = (width * (height + 1) + x * height + y);
+                TrackMustCross(xx, y);
+            }
+            if (GetCannotCrossConstraint(false, x, y) && node.OccupiedEdge(x, y, x, y + 1)) verdict = false;
         }
     }
     //	for (auto &c : mustCrossConstraints)
@@ -2758,7 +2850,7 @@ bool Witness<width, height>::GoalTest(const WitnessState<width, height> &node) c
     //	}
 
     // Didn't hit end of puzzle
-    if (node.path.size() == 0) return false;
+    if (node.path.size() == 0) verdict = false; //return false;
     // have to be off
     //	if (!
     //		(node.path.back().second > height || node.path.back().first > width ||
@@ -2766,7 +2858,7 @@ bool Witness<width, height>::GoalTest(const WitnessState<width, height> &node) c
     //		return false;
     if (node.path.back().second <= height && node.path.back().first <= width && node.path.back().second >= 0 &&
         node.path.back().first >= 0)
-        return false;
+        verdict = false; //return false;
 
     if (constraintCount[kTriangle] > 0)
         // if (triangleCount > 0)
@@ -2782,7 +2874,11 @@ bool Witness<width, height>::GoalTest(const WitnessState<width, height> &node) c
                     count += node.OccupiedEdge(x + 1, y, x + 1, y + 1);
                     count += node.OccupiedEdge(x, y + 1, x + 1, y + 1);
                     // if (count != triangleConstraints[y*width+x])
-                    if (count != regionConstraints[x][y].parameter) return false;
+                    if (count != regionConstraints[x][y].parameter) 
+                    {
+                        TrackInvalidConstraints(kTriangle, x, y);
+                        verdict = false;
+                    }
                 }
             }
         }
@@ -2809,6 +2905,8 @@ bool Witness<width, height>::GoalTest(const WitnessState<width, height> &node) c
             {
                 int x = GetRegionFromX(i); // l%width;
                 int y = GetRegionFromY(i); // l/width;
+                int x_c; 
+                int y_c; 
 
                 // if (separationConstraints[i].valid)
                 if (regionConstraints[x][y].type == kSeparation)
@@ -2816,11 +2914,15 @@ bool Witness<width, height>::GoalTest(const WitnessState<width, height> &node) c
                     if (!found)
                     {
                         c = regionConstraints[x][y].color; // separationConstraints[i].color;
+                        x_c = x; 
+                        y_c = y;
                         found = true;
                     }
                     else if (c != regionConstraints[x][y].color) // separationConstraints[i].color)
                     {
-                        return false;
+                        TrackInvalidConstraints(kSeparation, x, y);
+                        TrackInvalidConstraints(kSeparation, x_c, y_c);
+                        verdict = false;
                     }
                 }
             }
@@ -2828,7 +2930,19 @@ bool Witness<width, height>::GoalTest(const WitnessState<width, height> &node) c
     }
 
     // TODO: After this is working, see if we can merge the tetris constraints into the separation code
-    if (constraintCount[kTetris] == 0 && constraintCount[kNegativeTetris] > 0) return false;
+    if (constraintCount[kTetris] == 0 && constraintCount[kNegativeTetris] > 0) 
+    {
+        for (int x = 0; x < regionList.size(); x++)
+        {   
+            const auto &v = *regionList[x];
+            for (auto l: v) 
+                {
+                    if (regionConstraints[GetRegionFromX(l)][GetRegionFromY(l)].type == kNegativeTetris)
+                    TrackInvalidConstraints(kNegativeTetris, GetRegionFromX(l), GetRegionFromY(l));
+                } 
+        }
+        verdict = false;
+    }
 
     if (constraintCount[kStar] > 0)
     {
@@ -2855,10 +2969,18 @@ bool Witness<width, height>::GoalTest(const WitnessState<width, height> &node) c
                             regionConstraints[x][y].color == regionConstraints[xx][yy].color)
                         {
                             count++;
-                            if (count > 2) return false;
+                            if (count > 2) 
+                            {
+                                TrackInvalidConstraints(kStar, x, y);
+                                verdict = false;
+                            }
                         }
                     }
-                    if (count != 2) return false;
+                    if (count != 2) 
+                    {
+                        TrackInvalidConstraints(kStar, x, y);
+                        verdict = false;
+                    }
                 }
             }
         }
@@ -2894,7 +3016,14 @@ bool Witness<width, height>::GoalTest(const WitnessState<width, height> &node) c
             {
                 // printf("Region %d has %d tetris blocks and size %lu\n", x, tetrisBlockCount[x],
                 // regionList[x].size());
-                return false;
+                for (auto l: v) 
+                {   
+                    if (regionConstraints[GetRegionFromX(l)][GetRegionFromY(l)].type == kTetris)
+                        TrackInvalidConstraints(kTetris, GetRegionFromX(l), GetRegionFromY(l));
+                    else if (regionConstraints[GetRegionFromX(l)][GetRegionFromY(l)].type == kNegativeTetris)
+                        TrackInvalidConstraints(kNegativeTetris, GetRegionFromX(l), GetRegionFromY(l));
+                }
+                verdict = false;
             }
         }
 
@@ -2952,15 +3081,29 @@ bool Witness<width, height>::GoalTest(const WitnessState<width, height> &node) c
 
             // 4. Now we have all pieces, recursively try to place them
             if (!RecursivelyPlacePieces(0, board, oob, 0, 0))
-                return false; // No way to place them
+            {
+                verdict = false; //remove double
+
+                for (auto l: v) 
+                {   
+                    if (regionConstraints[GetRegionFromX(l)][GetRegionFromY(l)].type == kTetris)
+                        TrackInvalidConstraints(kTetris, GetRegionFromX(l), GetRegionFromY(l));
+                    else if (regionConstraints[GetRegionFromX(l)][GetRegionFromY(l)].type == kNegativeTetris)
+                        TrackInvalidConstraints(kNegativeTetris, GetRegionFromX(l), GetRegionFromY(l));
+                }
+                verdict = false; 
+            
+                //return false; // No way to place them
             //			printf("-%d-\n", 0);
             //			DebugPrint(board, 0);
             //			printf("Region %d successful\n", x);
+            }
         }
-        return true; // didn't find a way to place them
+        return verdict;
+        //return true; // didn't find a way to place them
     }
 
-    return true;
+    return verdict;
 }
 
 template<int width, int height>
@@ -3693,8 +3836,17 @@ void Witness<width, height>::Move(Graphics::point mouseLoc, InteractiveWitnessSt
 
 template<int width, int height>
 void Witness<width, height>::DrawRegionConstraint(
-        Graphics::Display &display, const WitnessRegionConstraint &constraint, const Graphics::point &p3) const
-{
+        Graphics::Display &display, const WitnessRegionConstraint &constraint, const Graphics::point &p3, bool isInvalid) const
+{   
+    // default color is the constraint's assigned color - for kSeparation and kStar
+    rgbColor currentColor = constraint.color;
+    // if the cons is invalid, change color to red
+    if (isInvalid) currentColor = constraintColorOnInvalid;
+    
+    rgbColor currentColor_tetris = constraintColorOnInvalid; // instead of tetrisYellow
+    rgbColor currentColor_nTetris = constraintColorOnInvalid; 
+    rgbColor currentColor_triangle = constraintColorOnInvalid; 
+
     switch (constraint.type)
     {
     case kNoRegionConstraint:
@@ -3702,25 +3854,25 @@ void Witness<width, height>::DrawRegionConstraint(
     case kSeparation:
     {
         Graphics::point delta = Graphics::point{lineWidth, lineWidth};
-        display.FillCircle(p3 + delta, lineWidth, constraint.color);
-        display.FillCircle(p3 - delta, lineWidth, constraint.color);
+        display.FillCircle(p3 + delta, lineWidth, currentColor);
+        display.FillCircle(p3 - delta, lineWidth, currentColor);
         delta.x = -delta.x;
-        display.FillCircle(p3 + delta, lineWidth, constraint.color);
-        display.FillCircle(p3 - delta, lineWidth, constraint.color);
+        display.FillCircle(p3 + delta, lineWidth, currentColor);
+        display.FillCircle(p3 - delta, lineWidth, currentColor);
         display.FillRect(
                 {p3.x - 1.0f * lineWidth, p3.y - 2.0f * lineWidth, p3.x + 1.0f * lineWidth,
                  p3.y + 2.0f * lineWidth},
-                constraint.color);
+                currentColor);
         display.FillRect(
                 {p3.x - 2.0f * lineWidth, p3.y - 1.0f * lineWidth, p3.x + 2.0f * lineWidth,
                  p3.y + 1.0f * lineWidth},
-                constraint.color);
+                currentColor);
         break;
     }
     case kStar:
     {
-        display.FillNGon(p3, gapOffset / 5.0f, 4, 0, constraint.color);
-        display.FillNGon(p3, gapOffset / 5.0f, 4, 45, constraint.color);
+        display.FillNGon(p3, gapOffset / 5.0f, 4, 0, currentColor);
+        display.FillNGon(p3, gapOffset / 5.0f, 4, 45, currentColor);
         break;
     }
     case kTetris:
@@ -3806,13 +3958,17 @@ void Witness<width, height>::DrawRegionConstraint(
                                            -2 * blockSize + yy * blockSize + 0.5f * blockSize - yOff * blockSize);
                         Graphics::rect r((p3 - p4), blockSize * 0.35f);
                         if (negative)
-                        {
-                            display.FillRect(r, tetrisBlue);
+                        {   
+                            if(!isInvalid) currentColor_nTetris = tetrisBlue; // set to tetrisBlue if valid
+                            display.FillRect(r, currentColor_nTetris);
                             Graphics::rect inner((p3 - p4), blockSize * 0.35f * 0.55f);
                             display.FillRect(inner, backColor);
                         }
                         else
-                            display.FillRect(r, tetrisYellow);
+                        {
+                            if(!isInvalid) currentColor_tetris = tetrisYellow;
+                            display.FillRect(r, currentColor_tetris);
+                        }
                     }
                 }
             }
@@ -3820,31 +3976,33 @@ void Witness<width, height>::DrawRegionConstraint(
         break;
     }
     case kTriangle:
-    {
+    {   
+        if(!isInvalid) currentColor_triangle = Colors::orange; //set to orange for triangle if valid
+        
         switch (constraint.parameter)
         {
         case 1:
         {
-            display.FillNGon(p3, lineWidth * 0.9f, 3, 60, Colors::orange);
+            display.FillNGon(p3, lineWidth * 0.9f, 3, 60, currentColor_triangle);
             break;
         }
         case 2:
         {
             Graphics::point p = p3;
             p.x -= lineWidth;
-            display.FillNGon(p, lineWidth * 0.9f, 3, 60, Colors::orange);
+            display.FillNGon(p, lineWidth * 0.9f, 3, 60, currentColor_triangle);
             p.x += 2 * lineWidth;
-            display.FillNGon(p, lineWidth * 0.9f, 3, 60, Colors::orange);
+            display.FillNGon(p, lineWidth * 0.9f, 3, 60, currentColor_triangle);
             break;
         }
         case 3:
         {
             Graphics::point p = p3;
-            display.FillNGon(p, lineWidth * 0.9f, 3, 60, Colors::orange);
+            display.FillNGon(p, lineWidth * 0.9f, 3, 60, currentColor_triangle);
             p.x -= 2 * lineWidth;
-            display.FillNGon(p, lineWidth * 0.9f, 3, 60, Colors::orange);
+            display.FillNGon(p, lineWidth * 0.9f, 3, 60, currentColor_triangle);
             p.x += 4 * lineWidth;
-            display.FillNGon(p, lineWidth * 0.9f, 3, 60, Colors::orange);
+            display.FillNGon(p, lineWidth * 0.9f, 3, 60, currentColor_triangle);
             break;
         }
         }
@@ -4095,7 +4253,7 @@ void Witness<width, height>::Draw(Graphics::Display &display) const
             Graphics::point p1 = GetScreenCoord(x, y);
             Graphics::point p2 = GetScreenCoord(x + 1, y + 1);
             Graphics::point pt = (p1 + p2) * 0.5;
-            DrawRegionConstraint(display, regionConstraints[x][y], pt);
+            DrawRegionConstraint(display, regionConstraints[x][y], pt, false);
         }
     }
 }
@@ -4143,6 +4301,85 @@ void Witness<width, height>::Draw(Graphics::Display &display, const InteractiveW
     // draw main state
     Draw(display, iws.ws);
 
+    //arcres //comment
+    if (iws.currState == InteractiveWitnessState<width, height>::kWaitingRestart)     
+    {   
+        invalidConstraints.clear(); 
+        mustCrossValid.clear();
+
+        if (!GoalTest(iws.ws) && iws.frac > 0.03)
+        {
+            PathColor(display, iws, lineColor); //to make sure the path isn't drawColor once the following code runs
+            // to draw the path cons (if any) on top to make sure they don't fade away until the blinking is over
+            for (const auto& pair : mustCrossValid) 
+            {
+                Graphics::point screenCoord = pathConstraintLocations[pair.first].first;
+                display.FillNGon(screenCoord, lineWidth * 0.9f, 6, 30, Colors::black);
+            }
+        } 
+
+        if (!GoalTest(iws.ws)) 
+        {   
+            if (iws.frac > 0.03 && iws.frac <= 2) 
+            {   
+                float perc = std::min((iws.frac - 0.03f) / 0.97f, 1.0f); 
+                rgbColor interpolatedColor = rgbColor::mix(drawColorOnInvalid, lineColor, perc);
+                rgbColor interpolatedColor_2 = rgbColor::mix(Colors::lightred, outerBackColor, perc);
+
+                //alternate between col1 red and col2 
+                rgbColor blinkColor = (fmod(iws.frac, 0.5f) < 0.25f) ? Colors::black : constraintColorOnInvalid;
+
+                // draw path then let it fade out
+                if (iws.frac <= 1) 
+                {   
+                    PathColor(display, iws, interpolatedColor);
+                    for (const auto& pair : mustCrossValid) 
+                    {
+                        Graphics::point screenCoord = pathConstraintLocations[pair.first].first;
+                        display.FillNGon(screenCoord, lineWidth * 0.9f, 6, 30, Colors::black);
+                    }
+                }
+
+                // draw invalid constraints
+                if (iws.frac <= 2) 
+                {
+                    for (int i = 0; i < invalidConstraints.size(); ++i) 
+                    {   
+                        // for (mustCross) path constraints
+                        if (i == kRegionConstraintCount + kMustCross) 
+                        {
+                            for (const auto& pair : invalidConstraints[i]) 
+                            {
+                                Graphics::point screenCoord = pathConstraintLocations[pair.first].first;
+                                display.FillNGon(screenCoord, lineWidth * 0.9f, 6, 30, blinkColor);
+                            }
+                        }
+                        else 
+                        {
+                            for (const auto& pair : invalidConstraints[i]) 
+                            {   
+                                Graphics::point p1 = GetScreenCoord(pair.first, pair.second);
+                                Graphics::point p2 = GetScreenCoord(pair.first + 1, pair.second + 1);
+
+                                Graphics::point p = { (p1.x + p2.x) / 2.0f, (p1.y + p2.y) / 2.0f };
+
+                                // background red frame that blinks
+                                display.FillNGon(p, (lineWidth * 17/3) , 4, 45, interpolatedColor_2); 
+
+				//to make the constraints blink
+                                bool useBlinkColor = (fmod(iws.frac, 0.5f) < 0.25f) ? true : false;
+                                DrawRegionConstraint(display, GetRegionConstraint(pair.first, pair.second), p, useBlinkColor);
+
+                                // to MAKE SURE the big start circle isn't being drawn on 
+                                display.FillCircle(GetScreenCoord(iws.ws.path[0].first, iws.ws.path[0].second), lineWidth * 3.f, interpolatedColor);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     if (iws.currState == InteractiveWitnessState<width, height>::kBetweenPoints)
     {
         // draw last fraction
@@ -4153,10 +4390,24 @@ void Witness<width, height>::Draw(Graphics::Display &display, const InteractiveW
         display.FillCircle(p2, lineWidth, drawColor);
         display.FillCircle(p2, lineWidth * 0.5f, lineColor);
     }
+    if (iws.currState == InteractiveWitnessState<width, height>::kInPoint)
+    {
+        if (iws.ws.InGoal())
+        {
+            rgbColor blinkColor_2 = (fmod(iws.frac, 0.5f) < 0.25f) ? drawColor : Colors::blue;
+            PathColor(display, iws, blinkColor_2);
+            
+            for (const auto &point : iws.ws.path)
+            {
+                Graphics::point p2 = GetScreenCoord(iws.ws.path.back().first, iws.ws.path.back().second);
+                display.FillCircle(p2, lineWidth * 0.5f, lineColor);
+            }
+        }
+    }
     else
     {
-        Graphics::point p2 = GetScreenCoord(iws.ws.path.back().first, iws.ws.path.back().second);
-        display.FillCircle(p2, lineWidth * 0.5f, lineColor);
+        //Graphics::point p2 = GetScreenCoord(iws.ws.path.back().first, iws.ws.path.back().second);
+        //display.FillCircle(p2, lineWidth * 0.5f, lineColor);
     }
 }
 
