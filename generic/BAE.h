@@ -102,6 +102,8 @@ public:
         }
         return necessary;
     }
+	void Draw(Graphics::Display &d) const;
+	void Draw(Graphics::Display &d, const priorityQueue &q) const;
 
 private:
 
@@ -401,7 +403,8 @@ void BAE<state, action, environment, priorityQueue>::Expand(priorityQueue &curre
  * @deprecated
  */
 template<class state, class action, class environment, class priorityQueue>
-void BAE<state, action, environment, priorityQueue>::Nip(const state &s, priorityQueue &reverse) {
+void BAE<state, action, environment, priorityQueue>::Nip(const state &s, priorityQueue &reverse)
+{
     assert(!"Not using this code currently - the correct implementation of 'remove' is unclear from BS*");
     // At this point parent has been removed from open
     // Need to find any successors that have a parent id of parent & recursively remove them from open
@@ -445,6 +448,67 @@ void BAE<state, action, environment, priorityQueue>::Nip(const state &s, priorit
             reverse.Remove(env->GetStateHash(childData.data));
         }
     }
+}
+template<class state, class action, class environment, class priorityQueue>
+void BAE<state, action, environment, priorityQueue>::Draw(Graphics::Display &disp) const
+{
+	Draw(disp, forwardQueue);
+	Draw(disp, backwardQueue);
+}
+
+template<class state, class action, class environment, class priorityQueue>
+void BAE<state, action, environment, priorityQueue>::Draw(Graphics::Display &disp, const priorityQueue &q) const
+{
+	double transparency = 1.0;
+	if (q.size() == 0)
+		return;
+	uint64_t top = -1;
+	//	double minf = 1e9, maxf = 0;
+	if (q.OpenSize() > 0)
+	{
+		top = q.Peek();
+	}
+	for (unsigned int x = 0; x < q.size(); x++)
+	{
+		const auto &data = q.Lookat(x);
+		if (x == top)
+		{
+			env->SetColor(1.0, 1.0, 0.0, transparency);
+			env->Draw(disp, data.data);
+		}
+		else if ((data.where == kOpenList) && (data.reopened))
+		{
+			env->SetColor(0.0, 0.5, 0.5, transparency);
+			env->Draw(disp, data.data);
+		}
+		else if (data.where == kOpenList)
+		{
+			env->SetColor(0.0, 1.0, 0.0, transparency);
+			env->Draw(disp, data.data);
+		}
+		else if ((data.where == kClosedList) && (data.reopened))
+		{
+			env->SetColor(0.5, 0.0, 0.5, transparency);
+			env->Draw(disp, data.data);
+		}
+		else if (data.where == kClosedList)
+		{
+			if (&q != &forwardQueue)
+				env->SetColor(0.25, 0.5, 1.0, transparency);
+			else
+				env->SetColor(1.0, 0.0, 0.0, transparency);
+			env->Draw(disp, data.data);
+
+//			if (data.parentID == x)
+//				env->SetColor(1.0, 0.5, 0.5, transparency);
+//			else
+//				env->SetColor(1.0, 0.0, 0.0, transparency);
+//			//			}
+//			env->Draw(disp, data.data);
+		}
+	}
+	env->SetColor(1.0, 0.5, 1.0, 0.5);
+	env->Draw(disp, goal);
 }
 
 #endif //BAE_H
