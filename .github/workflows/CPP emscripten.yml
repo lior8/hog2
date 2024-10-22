@@ -1,4 +1,4 @@
-name: C/C++ SFML Build
+name: C/C++ emscripten Build
 
 on:
   push:
