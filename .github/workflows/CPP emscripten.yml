@@ -17,8 +17,8 @@ jobs:
       shell: bash
 
       # Change the directory to be emsdk instead of the project root
-      working-directory: ${{github.workspace}}/emsdk
       run: |
+          git clone https://github.com/emscripten-core/emsdk.git
           ./emsdk install latest
           ./emsdk activate latest
 
