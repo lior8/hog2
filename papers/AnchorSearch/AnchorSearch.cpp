@@ -120,24 +120,24 @@ Heuristic<TOHState<numDisks>> *BuildPDB(const TOHState<numDisks> &goal)
 	TOH<pdb2Disks> absToh2;
 	TOHState<pdb1Disks> absTohState1;
 	TOHState<pdb2Disks> absTohState2;
-	
-	
+
+
 	TOHPDB<pdb1Disks, numDisks, pdb2Disks> *pdb1 = new TOHPDB<pdb1Disks, numDisks, pdb2Disks>(&absToh1, goal); // top disks
 	TOHPDB<pdb2Disks, numDisks> *pdb2 = new TOHPDB<pdb2Disks, numDisks>(&absToh2, goal); // bottom disks
 	pdb1->BuildPDB(goal, std::thread::hardware_concurrency(), false);
 	pdb2->BuildPDB(goal, std::thread::hardware_concurrency(), false);
-	
+
 	Heuristic<TOHState<numDisks>> *h = new Heuristic<TOHState<numDisks>>;
-	
+
 	h->lookups.resize(0);
-	
+
 	h->lookups.push_back({kAddNode, 1, 2});
 	h->lookups.push_back({kLeafNode, 0, 0});
 	h->lookups.push_back({kLeafNode, 1, 1});
 	h->heuristics.resize(0);
 	h->heuristics.push_back(pdb1);
 	h->heuristics.push_back(pdb2);
-	
+
 	return h;
 }
 
@@ -149,8 +149,8 @@ void BuildSinglePDB(Heuristic<TOHState<numDisks>> &h, const TOHState<numDisks> &
 	//TOH<pdb2Disks> absToh2;
 	TOHState<pdb1Disks> absTohState1;
 	//TOHState<pdb2Disks> absTohState2;
-	
-	
+
+
 	//TOHPDB<pdb1Disks, numDisks, pdb2Disks> *pdb1 = new TOHPDB<pdb1Disks, numDisks, pdb2Disks>(&absToh1, pivot1); // top disks
 	TOHPDB<pdb1Disks, numDisks> *pdb2 = new TOHPDB<pdb1Disks, numDisks>(&absToh1, pivot1); // bottom disks
 	pdb2->BuildPDB(pivot1, std::thread::hardware_concurrency(), false);
@@ -401,22 +401,24 @@ void BuildHeuristic(TOHState<numOfDisks> start, TOHState<numOfDisks> goal, Group
 
 
 template<int numOfDisks>
-void GenerateRandomEnds(TOHState<numOfDisks> &start, TOHState<numOfDisks> &goal, int seed)
+void GenerateRandomEnds(TOHState<numOfDisks> &start, TOHState<numOfDisks> &goal, int seed, bool flip=false)
 {
     srandom(seed);
-    start.counts[0] = start.counts[1] = start.counts[2] = start.counts[3] = 0;
+    auto &instance1 = flip ? goal : start;
+    instance1.counts[0] = instance1.counts[1] = instance1.counts[2] = instance1.counts[3] = 0;
 	for (int x = numOfDisks; x > 0; x--)
 	{
 		int whichPeg = random()%4;
-		start.disks[whichPeg][start.counts[whichPeg]] = x;
-		start.counts[whichPeg]++;
+		instance1.disks[whichPeg][instance1.counts[whichPeg]] = x;
+		instance1.counts[whichPeg]++;
 	}
-    goal.counts[0] = goal.counts[1] = goal.counts[2] = goal.counts[3] = 0;
+    auto &instance2 = flip ? start : goal;
+    instance2.counts[0] = instance2.counts[1] = instance2.counts[2] = instance2.counts[3] = 0;
 	for (int x = numOfDisks; x > 0; x--)
 	{
 		int whichPeg = random()%4;
-		goal.disks[whichPeg][goal.counts[whichPeg]] = x;
-		goal.counts[whichPeg]++;
+		instance2.disks[whichPeg][instance2.counts[whichPeg]] = x;
+		instance2.counts[whichPeg]++;
 	}
     std::cout << "---------------- problem seed: " << seed << " ----------------"  << std::endl;
     cout << "start:\t" << start << endl;
@@ -425,7 +427,8 @@ void GenerateRandomEnds(TOHState<numOfDisks> &start, TOHState<numOfDisks> &goal,
 
 
 template<int numOfDisks>
-void IterativeHeuristicTOHTest(TOHState<numOfDisks> start, TOHState<numOfDisks> goal, string alg, int ep, GroupHeuristic<TOHState<numOfDisks>> &hm, int candidates = 10)
+void IterativeHeuristicTOHTest(TOHState<numOfDisks> start, TOHState<numOfDisks> goal, string alg, int ep, GroupHeuristic<TOHState<numOfDisks>> &hm, int candidates = 10,
+                               bool alternating=true)
 {
     TOH<numOfDisks> *toh = new TOH<numOfDisks>();
     //TOHState<numOfDisks> start, goal, aux;
@@ -434,10 +437,10 @@ void IterativeHeuristicTOHTest(TOHState<numOfDisks> start, TOHState<numOfDisks> 
 
 
 	Timer timer;
-	
+
     if (alg == "tas-af")
 	{
-		TASS<TOH<numOfDisks>, TOHState<numOfDisks>> tas(toh, start, goal, &hm, &hm, candidates);
+		TASS<TOH<numOfDisks>, TOHState<numOfDisks>> tas(toh, start, goal, &hm, &hm, candidates, alternating);
 		tas.SetAnchorSelection(Anchor, Fixed);
         //tas.SetHeuristicUpdate(HUpdate<numOfDisks, pdb1Disks>);
         tas.episode = ep;
@@ -450,7 +453,7 @@ void IterativeHeuristicTOHTest(TOHState<numOfDisks> start, TOHState<numOfDisks> 
 	}
 	else if (alg == "tas-a")
 	{
-		TASS<TOH<numOfDisks>, TOHState<numOfDisks>> tas(toh, start, goal, &hm, &hm, candidates);
+		TASS<TOH<numOfDisks>, TOHState<numOfDisks>> tas(toh, start, goal, &hm, &hm, candidates, alternating);
 		tas.SetAnchorSelection(Anchor);
         //tas.SetHeuristicUpdate(HUpdate<numOfDisks, pdb1Disks>);
         tas.episode = ep;
@@ -463,7 +466,7 @@ void IterativeHeuristicTOHTest(TOHState<numOfDisks> start, TOHState<numOfDisks> 
 	}
 	else if (alg == "tas-t")
 	{
-		TASS<TOH<numOfDisks>, TOHState<numOfDisks>> tas(toh, start, goal, &hm, &hm, candidates);
+		TASS<TOH<numOfDisks>, TOHState<numOfDisks>> tas(toh, start, goal, &hm, &hm, candidates, alternating);
 		tas.SetAnchorSelection(Temporal);
         //tas.SetHeuristicUpdate(HUpdate<numOfDisks, pdb1Disks>);
         tas.episode = ep;
@@ -576,10 +579,11 @@ void IterativeHeuristicTOHTest(TOHState<numOfDisks> start, TOHState<numOfDisks> 
 
 
 template<int numOfDisks, int pdb1Disks, int pdb2Disks = 0>
-void Dispatch(string alg, int seed, float weight, bool multiple = true, int candidates = 10)
+void Dispatch(string alg, int seed, float weight, bool multiple = true, int candidates = 10, bool alternating=true, bool flip=false)
 {
     TOHState<numOfDisks> start, goal;
-    GenerateRandomEnds<numOfDisks>(start, goal, seed);
+    GenerateRandomEnds<numOfDisks>(start, goal, seed, flip);
+
     GroupHeuristic<TOHState<numOfDisks>> gh;
 	gh.weight = weight;
     Timer t;
@@ -587,40 +591,17 @@ void Dispatch(string alg, int seed, float weight, bool multiple = true, int cand
     BuildHeuristic<numOfDisks, pdb1Disks, pdb2Disks>(start, goal, gh, multiple);
     t.EndTimer();
     cout << "pdb: " << t.GetElapsedTime() << endl;
-    IterativeHeuristicTOHTest<numOfDisks>(start, goal, alg, -1, gh, candidates);
+    IterativeHeuristicTOHTest<numOfDisks>(start, goal, alg, -1, gh, candidates, alternating);
 }
 
 template<int numOfDisks, int pdb1Disks>
-void Dispatch(string alg, int seed, float weight, int pdb2Disks = 0, bool multiple = true, int candidates = 10)
+void Dispatch(string alg, int seed, float weight, int pdb2Disks = 0, bool multiple = true, int candidates = 10,
+              bool alternating=true, bool flip=false)
 {
     switch (pdb2Disks)
     {
         case 0:
-            Dispatch<numOfDisks, pdb1Disks, 0>(alg, seed, weight, multiple, candidates);
-            break;
-        case 5:
-            Dispatch<numOfDisks, pdb1Disks, 5>(alg, seed, weight, multiple, candidates);
-            break;
-        case 6:
-            Dispatch<numOfDisks, pdb1Disks, 6>(alg, seed, weight, multiple, candidates);
-            break;
-        case 7:
-            Dispatch<numOfDisks, pdb1Disks, 7>(alg, seed, weight, multiple, candidates);
-            break;
-        case 8:
-            Dispatch<numOfDisks, pdb1Disks, 8>(alg, seed, weight, multiple, candidates);
-            break;
-        case 9:
-            Dispatch<numOfDisks, pdb1Disks, 9>(alg, seed, weight, multiple, candidates);
-            break;
-        case 10:
-            Dispatch<numOfDisks, pdb1Disks, 10>(alg, seed, weight, multiple, candidates);
-            break;
-        case 11:
-            Dispatch<numOfDisks, pdb1Disks, 11>(alg, seed, weight, multiple, candidates);
-            break;
-        case 12:
-            Dispatch<numOfDisks, pdb1Disks, 12>(alg, seed, weight, multiple, candidates);
+            Dispatch<numOfDisks, pdb1Disks, 0>(alg, seed, weight, multiple, candidates, alternating, flip);
             break;
 		default:
 			std::cout << "pdb2 of size " << pdb2Disks << " is not supported!";
@@ -628,33 +609,22 @@ void Dispatch(string alg, int seed, float weight, int pdb2Disks = 0, bool multip
 }
 
 template<int numOfDisks>
-void Dispatch(string alg, int seed, float weight, int pdb1Disks, int pdb2Disks = 0, bool multiple = true, int candidates = 10)
+void Dispatch(string alg, int seed, float weight, int pdb1Disks, int pdb2Disks = 0, bool multiple = true, int candidates = 10,
+              bool alternating=true, bool flip=false)
 {
     switch (pdb1Disks)
     {
         case 5:
-            Dispatch<numOfDisks, 5>(alg, seed, weight, pdb2Disks, multiple, candidates);
-            break;
-        case 6:
-            Dispatch<numOfDisks, 6>(alg, seed, weight, pdb2Disks, multiple, candidates);
+            Dispatch<numOfDisks, 5>(alg, seed, weight, pdb2Disks, multiple, candidates, alternating, flip);
             break;
         case 7:
-            Dispatch<numOfDisks, 7>(alg, seed, weight, pdb2Disks, multiple, candidates);
-            break;
-        case 8:
-            Dispatch<numOfDisks, 8>(alg, seed, weight, pdb2Disks, multiple, candidates);
+            Dispatch<numOfDisks, 7>(alg, seed, weight, pdb2Disks, multiple, candidates, alternating, flip);
             break;
         case 9:
-            Dispatch<numOfDisks, 9>(alg, seed, weight, pdb2Disks, multiple, candidates);
-            break;
-        case 10:
-            Dispatch<numOfDisks, 10>(alg, seed, weight, pdb2Disks, multiple, candidates);
-            break;
-        case 11:
-            Dispatch<numOfDisks, 11>(alg, seed, weight, pdb2Disks, multiple, candidates);
+            Dispatch<numOfDisks, 9>(alg, seed, weight, pdb2Disks, multiple, candidates, alternating, flip);
             break;
         case 12:
-            Dispatch<numOfDisks, 12>(alg, seed, weight, pdb2Disks, multiple, candidates);
+            Dispatch<numOfDisks, 12>(alg, seed, weight, pdb2Disks, multiple, candidates, alternating, flip);
             break;
 		default:
 			std::cout << "pdb1 of size " << pdb1Disks << " is not supported!";
@@ -662,30 +632,22 @@ void Dispatch(string alg, int seed, float weight, int pdb1Disks, int pdb2Disks =
 }
 
 
-void Dispatch(string alg, int seed, float weight, int size, int pdb1Disks, int pdb2Disks = 0, bool multiple = true, int candidates = 10)
+void Dispatch(string alg, int seed, float weight, int size, int pdb1Disks, int pdb2Disks = 0, bool multiple = true, int candidates = 10,
+              bool alternating=true, bool flip=false)
 {
     switch (size)
     {
         case 10:
-            Dispatch<10>(alg, seed, weight, pdb1Disks, pdb2Disks, multiple, candidates);
+            Dispatch<10>(alg, seed, weight, pdb1Disks, pdb2Disks, multiple, candidates, alternating, flip);
+            break;
+        case 12:
+            Dispatch<12>(alg, seed, weight, pdb1Disks, pdb2Disks, multiple, candidates, alternating, flip);
+            break;
+        case 14:
+            Dispatch<14>(alg, seed, weight, pdb1Disks, pdb2Disks, multiple, candidates, alternating, flip);
             break;
         case 22:
-            Dispatch<22>(alg, seed, weight, pdb1Disks, pdb2Disks, multiple, candidates);
-            break;
-        case 24:
-            Dispatch<24>(alg, seed, weight, pdb1Disks, pdb2Disks, multiple, candidates);
-            break;
-        case 26:
-            Dispatch<26>(alg, seed, weight, pdb1Disks, pdb2Disks, multiple, candidates);
-            break;
-        case 28:
-            Dispatch<28>(alg, seed, weight, pdb1Disks, pdb2Disks, multiple, candidates);
-            break;
-        case 30:
-            Dispatch<30>(alg, seed, weight, pdb1Disks, pdb2Disks, multiple, candidates);
-            break;
-        case 32:
-            Dispatch<32>(alg, seed, weight, pdb1Disks, pdb2Disks, multiple, candidates);
+            Dispatch<22>(alg, seed, weight, pdb1Disks, pdb2Disks, multiple, candidates, alternating, flip);
             break;
 		default:
 			std::cout << "size " << size << " is not supported!";
@@ -695,21 +657,16 @@ void Dispatch(string alg, int seed, float weight, int size, int pdb1Disks, int p
 
 int main(int argc, char* argv[])
 {
-
-
-    //const int psize = 16;
-	//const int pdbsize = 12;
-	//for (int i = 1; i <= 100; i++)
-	//{
-
 	int size = -1;
-	int pdb1Disks = -1; 
+	int pdb1Disks = -1;
 	int pdb2Disks = 0;
 	int seed = 1;
 	int candidates = 10;
 	double weight = 1.;
 	bool multiple = false;
 	int verbosity = 1;
+    bool alternating=true;
+    bool flip=false;
 	std::string alg = "none";
 
 	std::unordered_map<std::string, std::string> args;
@@ -728,10 +685,10 @@ int main(int argc, char* argv[])
 	if (args.find("--help") != args.end() || args.find("-h") != args.end()) {
         std::string message = R"(
 Arguments:
-	--size: problem size, i.e., number of disks (options: 10, 22, 24, 26, 28, 30, 32)
+	--size: problem size, i.e., number of disks (options: 10, 12, 14, 22)
 	--seed: the seed used to generate start and goal
-	--pdb1: size of the first PDB capturing bottom disks (options: 5 to 12)
-	--pdb2: size of the second PDB (options: 5 to 12; disabled by default)
+	--pdb1: size of the first PDB capturing bottom disks (options: 5, 7, 9, 12)
+	--pdb2: size of the second PDB (disabled)
 	--repeat: if true, all the disks will be covered by non-overlapping PDBs of size pdb1. Note that the last PDB would be of size problem_size % pdb1 (default: false).
 	--weight: for weighted additive PDBs (default: 1)
 	--alg: the search algorithm; options:
@@ -750,6 +707,8 @@ Arguments:
 		- ras-af: randomized anchor search with hybrid anchor selection policy, i.e., AS^R_AF
 	--candidates/-k: number of candidates for TS, DNR, and anchor search algorithms. (default: 10).
 	--verbose: when larger than 0, the resolved arguments will be printed (default: 1)
+    --forward: always choose forward search instead of alternating for temporal AS
+    --flip: flip start and goal
 Examples:
 	./AnchorSearch --size 10 --pdb1 5 --seed 1 --alg tas-t -k 10                                ** AS^T(10)_T; PDB(0-4)
 	./AnchorSearch --size 22 --pdb1 12 --pdb2 4 --seed 1 --alg tas-af -k 20                     ** AS^T(20)_AF; PDB(0-11) + PDB(12-15)
@@ -762,6 +721,15 @@ Results:
 		std::cout << message << std::endl;
 		return 0;
     }
+
+    if(args.find("--forward") != args.end())
+    {
+        alternating = false;
+    }
+    if(args.find("--flip") != args.end())
+    {
+        flip = true;
+    }
 	if (args.find("--verbose") != args.end())
 	{
 		verbosity = stoi(args["--verbose"]);
@@ -769,7 +737,7 @@ Results:
 	if (args.find("--size") != args.end())
 	{
 		size = stoi(args["--size"]);
-		if (size != 10 && (size < 22 || size > 32 || size % 2 == 1))
+		if (size != 10 && size != 12 && size != 14 && (size < 22 || size > 32 || size % 2 == 1))
 		{
 			std::cout << "Problem size \"" << size <<"\" is not supported!" << std::endl;
 			return 0;
@@ -845,7 +813,11 @@ Results:
 		return 0;
 	}
 	if (verbosity > 0)
-		std::cout << "problem_size: " << size << ", seed: " << seed << ", pdb1: " << pdb1Disks << ", pdb2: " << pdb2Disks << ", multiple: " <<  multiple << ", weight: " << weight << ", alg: " << alg << ", candidates: " << candidates << std::endl;
-	Dispatch(alg, seed, weight, size, pdb1Disks, pdb2Disks, multiple, candidates);
+		std::cout << "problem_size: " << size << ", seed: " << seed << ", pdb1: " << pdb1Disks
+        << ", pdb2: " << pdb2Disks << ", multiple: " <<  multiple << ", weight: " << weight
+        << ", alg: " << alg << ", candidates: " << candidates
+        << ", forward: " << (alternating ? "false" : "true") << ", flip: " << (flip ? "true" : "false")
+        << std::endl;
+	Dispatch(alg, seed, weight, size, pdb1Disks, pdb2Disks, multiple, candidates, alternating, flip);
 	return 0;
 }

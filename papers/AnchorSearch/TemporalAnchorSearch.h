@@ -84,7 +84,7 @@ public:
 	{
 		//return abs(h->HCost(s1, s1) - h->HCost(s2, s2)) + abs(other->h->HCost(s1, s1) - other->h->HCost(s2, s2));
 
-		return h->HCost(s1, s2); 
+		return h->HCost(s1, s2);
 		//return MaxDH(s1, s2);
 	}
 
@@ -156,7 +156,7 @@ bool TASSFrontier<Env, State>::DoSingleSearchStep()
 		validSolution = false;
 		return true;
 	}
-		
+
 	double minDist = 99999999;
     auto back = open.back();
 	State bestCandidate = back.first;
@@ -236,10 +236,10 @@ bool TASSFrontier<Env, State>::DoSingleSearchStep()
             break;
         case Closest:
 		{
-			
+
 			//anchorH = HCost(anchor, other->start);
-			
-			
+
+
 			auto hh = HCost(bestCandidate, other->start);
             if (hh < anchorH || anchorH < 0)
             {
@@ -284,7 +284,7 @@ bool TASSFrontier<Env, State>::DoSingleSearchStep()
 			break;
     }
 
-    
+
 	//anchor = bestCandidate;
     /*
 	if (other->openClosed.find(bestCandidateHash) != other->openClosed.end())// || bestCandidate == other->start)
@@ -314,8 +314,10 @@ public:
 	double pathRatio;
 	TASSFrontier<Env, State>* ff;
 	TASSFrontier<Env, State>* bf;
+    bool alternating;
 	TASS();
-	TASS(Env *_env, State _start, State _goal, Heuristic<State> *hf, Heuristic<State> *hb, int _sampleCount);
+	TASS(Env *_env, State _start, State _goal, Heuristic<State> *hf, Heuristic<State> *hb, int _sampleCount,
+         bool _alternating = true);
 	~TASS(){}
 	void Init(Env *_env, State _start, State _goal, Heuristic<State> *hf, Heuristic<State> *hb, int _sampleCount)
 	{
@@ -341,16 +343,20 @@ public:
 	}
 	bool DoSingleSearchStep()
 	{
-		if (turn == 0)
-		{
-			turn = 1;
-			return ff->DoSingleSearchStep();
-		}
-		else
-		{
-			turn = 0;
-			return bf->DoSingleSearchStep();
-		}
+		if (alternating){
+            if (turn == 0)
+            {
+                turn = 1;
+                return ff->DoSingleSearchStep();
+            }
+            else
+            {
+                turn = 0;
+                return bf->DoSingleSearchStep();
+            }
+        } else {
+            return ff->DoSingleSearchStep();
+        }
 	}
 	void ExtractPath(std::vector<State> &path)
 	{
@@ -432,10 +438,12 @@ public:
 
 
 template <class Env, class State>
-TASS<Env, State>::TASS(Env *_env, State _start, State _goal, Heuristic<State> *hf, Heuristic<State> *hb, int _sampleCount)
+TASS<Env, State>::TASS(Env *_env, State _start, State _goal, Heuristic<State> *hf, Heuristic<State> *hb, int _sampleCount,
+                       bool _alternating)
 {
 	ff = new TASSFrontier<Env, State>(_env, _start, hf, _sampleCount);
 	bf = new TASSFrontier<Env, State>(_env, _goal, hb, _sampleCount);
 	ff->other = bf;
 	bf->other = ff;
+    alternating = _alternating;
 }
